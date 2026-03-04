@@ -1,0 +1,348 @@
+---
+title: 'Portfolio Grid'
+description: 'Dynamic portfolio filtering and search system with category navigation'
+---
+
+# Portfolio Grid
+
+The Portfolio Grid component provides a powerful filtering, search, and navigation system for displaying portfolio items with multiple categories and subcategories.
+
+## Overview
+
+Implemented in `portfolio-grid.js`, this component manages:
+
+- **Category filtering**: Multiple disciplines (Brands, Dev, Studio, Strategy)
+- **Search functionality**: Real-time portfolio item search
+- **Subcategory navigation**: Dynamic submenu rendering
+- **Mobile-optimized**: Responsive tab navigation with smooth scrolling
+
+## Initialization Check
+
+The component only initializes when required elements exist (`portfolio-grid.js:11`):
+
+```javascript
+const requiredElements = [
+  "#tabsList",
+  "#cardGrid",
+  "#tab-search__bar",
+  "#results-count",
+];
+
+const allExist = requiredElements.every(
+  (selector) => document.querySelector(selector) !== null,
+);
+
+if (!allExist) {
+  console.log(
+    "[PortfolioGrid] Required elements not found. Skipping initialization.",
+  );
+  return;
+}
+```
+
+## Configuration
+
+### Categories
+
+From `portfolio-grid.js:32`:
+
+```javascript
+const categories = [
+  { id: 0, label: "Todo", filter: "all", subs: [] },
+  { id: 1, label: "Diseño", filter: "brands", subs: [] },
+  { id: 2, label: "Webs", filter: "dev", subs: [] },
+  { id: 3, label: "Studio", filter: "studio", subs: [] },
+  { id: 4, label: "Marketing", filter: "strategy", subs: [] },
+];
+```
+
+### Portfolio Data Structure
+
+From `portfolio-grid.js:60`:
+
+```javascript
+const portfolioData = [
+  {
+    id: "001",
+    slug: "hello-dish",
+    discipline: "brands",
+    category: ["manual-de-marca", "branding"],
+    content_type: "Portfolio",
+    title: ["Hello Dish", "Identidad"],
+    client_name: "Hello Dish",
+    client_industry: "Restaurantes",
+    extract: "La convergencia entre lo análogo y lo digital nos da lugar a Hello Dish...",
+    cover_image: "../../../assets/images/portfolio/hello-dish-portfolio-card.jpg",
+    logo: "../../../assets/images/portfolio/logos/hello-dish-logo.jpg",
+  },
+  // ... more items
+];
+```
+
+### Discipline Labels
+
+From `portfolio-grid.js:141`:
+
+```javascript
+const disciplineLabels = {
+  brands: "Klef Brands",
+  dev: "Klef Dev",
+  studio: "Klef Studio",
+  strategy: "Klef Strategy",
+};
+```
+
+## Card Rendering
+
+### Template Function
+
+From `portfolio-grid.js:180`:
+
+```javascript
+function createCardTemplate(card) {
+  return `
+    <article class="card dark" data-id="${card.id}" data-discipline="${card.discipline}">
+      <span class="category-tag tag-${card.discipline}">${disciplineLabels[card.discipline]}</span>
+      <img src="${card.cover_image}" alt="${card.title[0]}">
+      <section>
+        <div class="project-header">
+          <div class="project-logo">
+            <img src="${card.logo || card.cover_image}" alt="${card.title[0]}">
+          </div>
+          <div class="project-title">
+            <h2>
+              ${card.title[0]} <small>| ${card.title[1]}</small>
+            </h2>
+            <span>${card.category.join(", ")}</span>
+          </div>
+        </div>
+        <p><br>
+          ${card.extract}
+        </p>
+        <div class="project-actions">
+          <div class="tag-portfolio" role="button" tabindex="0" aria-label="Leer historia de ${card.title[0]}">
+            <i class="fa-solid fa-user"></i> Leer historia
+          </div>
+          <button class="see-more" data-component="portfolioDetail" data-id="${card.id}" aria-label="Ver detalles de ${card.title[0]}">Más</button>
+        </div>
+      </section>
+    </article>
+  `;
+}
+```
+
+### Render Cards
+
+From `portfolio-grid.js:211`:
+
+```javascript
+function renderCards(cards) {
+  cardGrid.innerHTML = cards.map((card) => createCardTemplate(card)).join("");
+  if (resultsCount) {
+    resultsCount.textContent = `${cards.length} Proyecto${cards.length !== 1 ? "s" : ""}`;
+  }
+}
+```
+
+## Filtering Logic
+
+From `portfolio-grid.js:218`:
+
+```javascript
+function applyFilters() {
+  let filtered = portfolioData;
+
+  const currentFilter = categories[activeId].filter;
+
+  if (currentFilter !== "all") {
+    filtered = filtered.filter((card) => card.discipline === currentFilter);
+  }
+
+  if (currentSub) {
+    const mapped = subMapping[currentSub];
+    if (mapped) {
+      filtered = filtered.filter((card) =>
+        card.category.some((c) =>
+          c.toLowerCase().includes(mapped.toLowerCase()),
+        ),
+      );
+    }
+  }
+
+  if (searchTerm) {
+    filtered = filtered.filter(
+      (card) =>
+        card.title.some((t) =>
+          t.toLowerCase().includes(searchTerm.toLowerCase()),
+        ) ||
+        card.category.some((c) =>
+          c.toLowerCase().includes(searchTerm.toLowerCase()),
+        ) ||
+        card.client_name.toLowerCase().includes(searchTerm.toLowerCase()),
+    );
+  }
+
+  renderCards(filtered);
+}
+```
+
+## Tab Navigation
+
+### Render Tabs
+
+From `portfolio-grid.js:254`:
+
+```javascript
+function renderTabs() {
+  tabsList.innerHTML = categories
+    .map(
+      (cat) => `
+      <li data-name="${cat.label}">
+        <button class="tab-button ${cat.id === activeId ? "active" : ""}" data-id="${cat.id}" aria-label="Filtrar por ${cat.label}" aria-pressed="${cat.id === activeId}">
+          ${cat.label}
+          ${cat.subs.length > 0 ? '<span class="has-sub-indicator"></span>' : ""}
+        </button>
+      </li>
+    `,
+    )
+    .join("");
+}
+```
+
+### Tab Click Handler
+
+From `portfolio-grid.js:326`:
+
+```javascript
+tabsList.addEventListener("click", (e) => {
+  const btn = e.target.closest(".tab-button");
+  if (!btn) return;
+
+  activeId = parseInt(btn.getAttribute("data-id"));
+  renderTabs();
+  updateSubMenus();
+  applyFilters();
+
+  // Auto-scroll to center active button on mobile
+  if (window.innerWidth <= 768) {
+    setTimeout(() => {
+      const container = document.getElementById("tabsContainer");
+      const activeButton = container.querySelector(".tab-button.active");
+
+      if (!activeButton) return;
+
+      const containerWidth = container.offsetWidth;
+      const buttonWidth = activeButton.offsetWidth;
+      const buttonOffset = activeButton.offsetLeft;
+
+      const scrollPosition =
+        buttonOffset - containerWidth / 2 + buttonWidth / 2;
+
+      const maxScroll = container.scrollWidth - containerWidth;
+      const finalScroll = Math.min(Math.max(0, scrollPosition), maxScroll);
+
+      container.scrollTo({
+        left: finalScroll,
+        behavior: "smooth",
+      });
+    }, 0);
+  }
+});
+```
+
+## Search Functionality
+
+From `portfolio-grid.js:381`:
+
+```javascript
+if (searchInputPortfolio) {
+  searchInputPortfolio.addEventListener("focus", () => {
+    if (searchingCheckbox) searchingCheckbox.checked = true;
+    desktopSubChips.classList.remove("active");
+    mobileSubDock.classList.remove("active");
+  });
+
+  searchInputPortfolio.addEventListener("blur", () => {
+    if (searchInputPortfolio.value.trim() === "") {
+      if (searchingCheckbox) searchingCheckbox.checked = false;
+      updateSubMenus();
+    }
+  });
+
+  searchInputPortfolio.addEventListener("input", (e) => {
+    searchTerm = e.target.value;
+    applyFilters();
+  });
+}
+```
+
+## Mobile Menu Toggle
+
+From `portfolio-grid.js:401`:
+
+```javascript
+const menuToggle = document.getElementById("menuToggle");
+const menuIcon = document.getElementById("menuIcon");
+const closeIcon = document.getElementById("closeIcon");
+const tabsContainer = document.getElementById("tabsContainer");
+
+if (menuToggle) {
+  menuToggle.addEventListener("click", () => {
+    const isExpanded = tabsContainer.classList.toggle("expanded");
+
+    if (isExpanded) {
+      if (menuIcon) menuIcon.style.display = "none";
+      if (closeIcon) closeIcon.style.display = "block";
+    } else {
+      if (menuIcon) menuIcon.style.display = "block";
+      if (closeIcon) closeIcon.style.display = "none";
+    }
+  });
+}
+```
+
+## Required HTML Structure
+
+```html
+<div id="tabsContainer" class="tabs-container">
+  <ul id="tabsList" class="tabs-list"></ul>
+</div>
+
+<div class="search-bar">
+  <input type="text" id="tab-search__bar" placeholder="Search portfolio...">
+  <input type="checkbox" id="is-searching" hidden>
+</div>
+
+<div id="desktopSubChips" class="sub-chips"></div>
+<div id="mobileSubDock" class="mobile-sub-dock"></div>
+
+<div id="results-count"></div>
+
+<div id="cardGrid" class="portfolio-grid"></div>
+```
+
+## Usage
+
+1. Include the script:
+   ```html
+   <script src="/shared/components/index-portfolio/portfolio-grid.js"></script>
+   ```
+
+2. Ensure all required elements exist in the DOM
+
+3. The component will auto-initialize and render portfolio items
+
+## Performance Features
+
+- **Conditional initialization**: Only runs when required elements exist
+- **Debounced resize**: Prevents excessive submenu updates
+- **Smooth scrolling**: CSS `scroll-behavior` for better UX
+- **Lazy filtering**: Only filters on user interaction
+
+## Browser Support
+
+Requires:
+- ES6+ JavaScript
+- Array methods (map, filter, some)
+- Template literals
+- DOM Level 2 Events

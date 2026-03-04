@@ -1,0 +1,527 @@
+---
+title: 'Dynamic Island'
+description: 'iOS-inspired dynamic notification and action bar component'
+---
+
+# Dynamic Island
+
+The Dynamic Island is an iOS-inspired floating action bar that provides contextual actions and notifications at the bottom of the screen.
+
+## Overview
+
+Implemented in `dynamic-island.js`, this advanced component provides:
+
+- **Multiple presets**: Pre-configured layouts for different use cases
+- **Toast notifications**: Temporary message display
+- **Scroll-triggered visibility**: Appears after scrolling threshold
+- **Responsive states**: Pill, expanded, and fullscreen modes
+- **Template system**: Dynamic HTML generation with data binding
+- **Haptic feedback**: Visual feedback on interactions
+
+## Component Class
+
+From `dynamic-island.js:203`:
+
+```javascript
+class DynamicIsland {
+  constructor(initialConfig = {}) {
+    this.config = initialConfig;
+    this.container = null;
+    this.island = null;
+    this.islandContent = null;
+    this.centerBtn = null;
+    this.islandCloseBtn = null;
+    this.contextBadge = null;
+    this.lastScroll = 0;
+    this.scrollTimeout = null;
+    this.isFullscreen = false;
+    this.escapeHandler = null;
+    this.currentPreset = initialConfig.presetName || "default";
+
+    this.init();
+  }
+}
+```
+
+## Presets
+
+### Search + Menu + Cart
+
+From `dynamic-island.js:238`:
+
+```javascript
+search_menu_cart: {
+  getHtmlStructure(data) {
+    return `
+    <div class="island-content">
+      <button class="island-btn secondary" data-action="menu">
+        <span class="icon">${data.menu.icon}</span>
+        <span>${data.menu.name}</span>
+      </button>
+      <div class="center-content" data-action="search">
+        <span class="search-icon">${data.search.icon}</span>
+        <span>${data.search.name}</span>
+      </div>
+      <button class="island-btn accent" data-action="cart">
+        <span class="icon">${data.cart.icon}</span>
+        <span>${data.cart.name}</span>
+      </button>
+    </div>`;
+  },
+  data: {
+    menu: {
+      icon: ICONS.hamMenu,
+      name: "Menú",
+      function: () => {
+        if (window.innerWidth <= 768) {
+          if (typeof toggleMenu === "function") {
+            toggleMenu();
+          }
+        } else {
+          const firstMenuBtn = document.querySelector("a[data-mega]");
+          if (firstMenuBtn) {
+            const mouseEnterEvent = new MouseEvent("mouseenter", {
+              view: window,
+              bubbles: true,
+              cancelable: true,
+            });
+            firstMenuBtn.dispatchEvent(mouseEnterEvent);
+          }
+        }
+      },
+    },
+    // ... more actions
+  },
+}
+```
+
+### Search + To Top
+
+From `dynamic-island.js:291`:
+
+```javascript
+search_totop: {
+  getHtmlStructure(data) {
+    return `
+      <div class="island-content">
+        <div class="center-content" data-action="search">
+          <span class="search-icon">${data.search.icon}</span>
+          <span>${data.search.name}</span>
+        </div>
+        <button class="island-btn accent" data-action="totop">
+          <span class="icon">${data.totop.icon}</span>
+          <span>${data.totop.name}</span>
+        </button>
+      </div>`;
+  },
+  data: {
+    search: {
+      icon: ICONS.search,
+      name: "Buscar",
+      function: SafeActions.openSearch,
+    },
+    totop: {
+      icon: ICONS.totop || "↑",
+      name: "Volver arriba",
+      function: SafeActions.totop,
+    },
+  },
+}
+```
+
+## Scroll Detection
+
+From `dynamic-island.js:710`:
+
+```javascript
+setupScrollDetection() {
+  window.addEventListener("scroll", () => {
+    if (!this.container || !this.island) return;
+
+    // Don't show dynamic island if body is scroll-locked (overlays are open)
+    if (typeof ScrollLock !== "undefined" && ScrollLock.isLocked()) {
+      return;
+    }
+
+    const currentScroll = window.pageYOffset;
+    clearTimeout(this.scrollTimeout);
+
+    if (currentScroll > 200) {
+      this.container.classList.add("visible");
+
+      setTimeout(() => {
+        if (!this.isFullscreen && this.island) {
+          this.island.classList.remove("pill");
+          this.island.classList.add("expanded");
+
+          if (currentScroll > 300 && currentScroll < 600) {
+            if (this.contextBadge) {
+              this.contextBadge.classList.add("show");
+              setTimeout(
+                () => this.contextBadge.classList.remove("show"),
+                2000,
+              );
+            }
+          }
+        }
+      }, 300);
+
+      this.scrollTimeout = setTimeout(() => {
+        if (!this.isFullscreen && this.island) {
+          this.island.classList.remove("expanded");
+          this.island.classList.add("pill");
+        }
+      }, 2000);
+    } else {
+      this.container.classList.remove("visible");
+      if (this.island) {
+        this.island.classList.remove("expanded");
+        this.island.classList.add("pill");
+      }
+    }
+
+    this.lastScroll = currentScroll;
+  });
+}
+```
+
+## Toast Notifications
+
+### Show Toast
+
+From `dynamic-island.js:794`:
+
+```javascript
+showToast(html, data = {}, type = "3s") {
+  if (!this.island || !this.islandContent) return;
+
+  this.container.classList.add("visible");
+  this.island.setAttribute("data-status", "toast");
+
+  if (data.fullWidth) {
+    this.island.classList.add("full-width");
+  }
+
+  // Save previous state
+  if (
+    !this.previousHtml ||
+    this.island.getAttribute("data-status") !== "toast"
+  ) {
+    this.previousHtml = this.islandContent.innerHTML;
+    this.previousData = this.config.data || {};
+  }
+
+  let toastStructure;
+  const toastData = { ...data };
+
+  if (
+    data.actions &&
+    Array.isArray(data.actions) &&
+    data.actions.length > 0
+  ) {
+    toastStructure = DynamicIsland.toastTemplates.withActions(
+      html,
+      data.actions,
+    );
+    toastData.actions = data.actions;
+  } else if (type === "persistent") {
+    toastStructure = DynamicIsland.toastTemplates.persistent(html);
+  } else {
+    toastStructure = DynamicIsland.toastTemplates.simple(html);
+  }
+
+  this.hydrateIsland(toastStructure, toastData);
+
+  if (data.actions) {
+    this._attachToastActionHandlers(data.actions);
+  }
+
+  this._scheduleToastDismiss(type, data.duration);
+}
+```
+
+### Toast Templates
+
+From `dynamic-island.js:409`:
+
+```javascript
+static toastTemplates = {
+  simple: (content) => `<div class="island-content">
+    <div class="toast-content">${content}</div>
+  </div>`,
+
+  persistent: (content) => `<div class="island-content">
+    <div class="toast-content">
+      ${content}
+      <button class="toast-close-btn" onclick="closeToast()">×</button>
+    </div>
+  </div>`,
+
+  withActions: (content, actions) => {
+    const actionsHtml = actions
+      .map(
+        (action, index) =>
+          `<button class="toast-action-btn" data-action-index="${index}">${action.text}</button>`,
+      )
+      .join("");
+    return `<div class="island-content">
+      <div class="toast-content">
+        ${content}
+        <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 1rem;">
+          ${actionsHtml}
+        </div>
+      </div>
+    </div>`;
+  },
+
+  cookies: (customText) => {
+    const defaultText =
+      customText ||
+      "<small>Este sitio utiliza cookies para mejorar tu experiencia</small>";
+    return `<div class="island-content">
+      <div class="toast-content">
+        <div style="display: flex; align-items: center; gap: 1rem; width: 100%;">
+          <span style="font-size: 1.8em;">🍪</span>
+          <div style="flex: 1;">
+            <strong>Usamos cookies</strong><br>
+            ${defaultText}
+          </div>
+        </div>
+      </div>
+    </div>`;
+  },
+};
+```
+
+## HTML Structure
+
+From `dynamic-island.html:1`:
+
+```html
+<div class="dynamic-island-container">
+  <div
+    class="dynamic-island pill"
+    role="region"
+    aria-label="Dynamic Island"
+    data-status="tool-set"
+  >
+    <button class="close-btn" aria-label="Cerrar">×</button>
+    <div class="island-content">
+      <div
+        class="center-content"
+        data-action="search"
+        style="pointer-events: auto; cursor: pointer"
+      >
+        <span class="search-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <use href="#icon-search"></use>
+          </svg>
+        </span>
+        <span>Buscar</span>
+      </div>
+      <button class="island-btn accent" data-action="totop">
+        <span class="icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <use href="#arrow-up"></use>
+          </svg>
+        </span>
+        <span>Volver arriba</span>
+      </button>
+    </div>
+  </div>
+</div>
+```
+
+## Styling
+
+### Container and Base Styles
+
+From `dynamic-island.css:4`:
+
+```css
+.dynamic-island-container {
+  position: fixed;
+  bottom: -100px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9999;
+  transition: bottom 0.6s cubic-bezier(0.25, 0.1, 0, 1.02);
+  width: max-content;
+}
+
+.dynamic-island-container.visible {
+  bottom: 20px;
+}
+
+.dynamic-island {
+  position: relative;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(40px) saturate(180%);
+  -webkit-backdrop-filter: blur(40px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 30px;
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow:
+    0 10px 40px rgba(0, 0, 0, 0.12),
+    0 2px 8px rgba(0, 0, 0, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  transition: all 0.5s cubic-bezier(0.25, 0.1, 0, 1.02);
+  max-width: 90vw;
+}
+```
+
+### State Classes
+
+From `dynamic-island.css:38`:
+
+```css
+/* Pill State (default) */
+.dynamic-island.pill {
+  padding: 6px 8px;
+  gap: 6px;
+}
+
+.dynamic-island.pill .island-btn {
+  width: 40px;
+  height: 40px;
+  padding: 0;
+}
+
+.dynamic-island.pill .island-btn:not(.center-content) span:not(.icon) {
+  display: none;
+}
+
+/* Expanded State */
+.dynamic-island.expanded {
+  padding: 10px 14px;
+  gap: 10px;
+}
+
+.dynamic-island.expanded .island-btn {
+  width: auto;
+  padding: 0 16px;
+}
+
+.dynamic-island.expanded .island-btn span:not(.icon) {
+  display: inline-block !important;
+  margin-left: 8px;
+}
+```
+
+## Public API
+
+From `dynamic-island.js:1212`:
+
+```javascript
+window.Klef.DynamicIsland = {
+  Class: DynamicIsland,
+  instance: () => dynamicIslandInstance,
+
+  presets: DynamicIsland.presets,
+  toastTemplates: DynamicIsland.toastTemplates,
+
+  init: initDynamicIsland,
+  set: setDynamicIsland,
+  hydrate: hydrateIsland,
+
+  showToast,
+  listActions: listIslandActions,
+  trigger: triggerIslandAction,
+  loadPreset,
+
+  showCookieConsent,
+  checkAndShowCookieConsent,
+  initCookieConsentUI,
+};
+```
+
+## Usage Examples
+
+### Initialize with Default Preset
+
+```javascript
+window.Klef.DynamicIsland.init();
+```
+
+### Load a Different Preset
+
+```javascript
+window.Klef.DynamicIsland.loadPreset('search_menu_cart');
+```
+
+### Show a Toast Notification
+
+```javascript
+window.Klef.DynamicIsland.showToast(
+  '✅ Changes saved successfully',
+  { duration: 3000 },
+  '3s'
+);
+```
+
+### Show Toast with Actions
+
+```javascript
+window.Klef.DynamicIsland.showToast(
+  'New update available',
+  {
+    actions: [
+      {
+        text: 'Update Now',
+        onClick: () => window.location.reload()
+      },
+      {
+        text: 'Later',
+        onClick: () => console.log('Dismissed')
+      }
+    ]
+  },
+  'persistent'
+);
+```
+
+### Cookie Consent
+
+```javascript
+window.Klef.DynamicIsland.showCookieConsent(
+  'We use cookies to enhance your experience',
+  {
+    acceptText: 'Accept All',
+    essentialText: 'Essential Only',
+    onAcceptAll: () => console.log('All cookies accepted'),
+    onEssentialOnly: () => console.log('Only essential cookies')
+  }
+);
+```
+
+## Auto-Initialization
+
+From `dynamic-island.js:1236`:
+
+```javascript
+document.addEventListener("DOMContentLoaded", () => {
+  let initialized = false;
+
+  const initOnScroll = () => {
+    if (!initialized) {
+      initialized = true;
+      initDynamicIsland();
+      window.removeEventListener("scroll", initOnScroll);
+    }
+  };
+
+  window.addEventListener("scroll", initOnScroll, { passive: true });
+});
+```
+
+## Browser Support
+
+Requires:
+- ES6+ JavaScript (classes, arrow functions, template literals)
+- CSS backdrop-filter
+- CSS custom properties
+- Intersection Observer
+- Custom Elements v1

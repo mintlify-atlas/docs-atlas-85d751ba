@@ -1,0 +1,195 @@
+---
+title: Adding Portfolio Items
+description: Learn how to create and structure portfolio items in the Klef Sonatta website
+---
+
+Portfolio items in the Klef Sonatta website follow a consistent directory structure and use a dynamic loading system. Each portfolio item is a standalone page that gets automatically integrated into the portfolio grid.
+
+## Portfolio Structure
+
+Portfolio items are located in the `~/workspace/source/portfolio/` directory. Each item has its own folder with a standardized structure:
+
+```
+portfolio/
+├── casa-valentina-los-cabos-restaurant-brand/
+│   └── index.html
+├── fish-and-grill-los-cabos-restaurant-brand/
+│   └── index.html
+├── hello-dish-los-cabos-branding/
+│   └── index.html
+└── punta-medano-los-cabos-restaurant-brand/
+    └── index.html
+```
+
+## Creating a New Portfolio Item
+
+### 1. Create the Directory
+
+Create a new folder in `portfolio/` with a descriptive, URL-friendly name:
+
+```bash
+mkdir portfolio/your-project-name
+```
+
+### 2. Create the HTML File
+
+Each portfolio item uses a minimal HTML structure with dynamic loading:
+
+```html title="portfolio/your-project-name/index.html"
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Your Project Name | Klef Agency</title>
+  </head>
+  <body>
+    <script src="../../shared/components/load-basics/load-basics.js"></script>
+    <script src="../../shared/components/portfolio/portfolio-loader.js"></script>
+  </body>
+</html>
+```
+
+**Key points:**
+- The HTML file only contains two script tags
+- `load-basics.js` loads the site's core components (navigation, footer, etc.)
+- `portfolio-loader.js` loads the portfolio item template and structure
+- All paths are relative to the portfolio item location
+
+### 3. Add to Portfolio Data
+
+Register your portfolio item in the portfolio grid system by adding it to the `portfolioData` array in `shared/components/index-portfolio/portfolio-grid.js`:
+
+```javascript title="shared/components/index-portfolio/portfolio-grid.js"
+const portfolioData = [
+  {
+    id: "007",
+    slug: "your-project-name",
+    discipline: "brands", // or "dev", "studio", "strategy"
+    category: ["branding", "diseño-web"],
+    content_type: "Portfolio",
+    title: ["Your Project", "Name"],
+    client_name: "Client Name",
+    client_industry: "Industry",
+    extract: "Brief description of the project...",
+    cover_image: "../../../assets/images/portfolio/your-project-cover.jpg",
+    logo: "../../../assets/images/portfolio/logos/your-project-logo.jpg"
+  },
+  // ... other items
+];
+```
+
+## Portfolio Card Structure
+
+The portfolio grid automatically generates cards from the data. Here's the HTML structure that gets created:
+
+```html
+<article class="card dark" data-id="007" data-discipline="brands">
+  <span class="category-tag tag-brands">Klef Brands</span>
+  <img src="../../../assets/images/portfolio/your-project-cover.jpg" alt="Your Project">
+  <section>
+    <div class="project-header">
+      <div class="project-logo">
+        <img src="../../../assets/images/portfolio/logos/your-project-logo.jpg" alt="Your Project">
+      </div>
+      <div class="project-title">
+        <h2>
+          Your Project <small>| Name</small>
+        </h2>
+        <span>branding, diseño-web</span>
+      </div>
+    </div>
+    <p><br>
+      Brief description of the project...
+    </p>
+    <div class="project-actions">
+      <div class="tag-portfolio" role="button" tabindex="0" aria-label="Leer historia de Your Project">
+        <i class="fa-solid fa-user"></i> Leer historia
+      </div>
+      <button class="see-more" data-component="portfolioDetail" data-id="007" aria-label="Ver detalles de Your Project">Más</button>
+    </div>
+  </section>
+</article>
+```
+
+## Portfolio Disciplines
+
+The system supports four main disciplines:
+
+| Discipline | Label | Description |
+|------------|-------|-------------|
+| `brands` | Klef Brands | Branding and identity projects |
+| `dev` | Klef Dev | Web development and digital products |
+| `studio` | Klef Studio | Multimedia and video content |
+| `strategy` | Klef Strategy | Marketing and business strategy |
+
+## Filtering System
+
+The portfolio grid includes a powerful filtering system defined in `portfolio-grid.js:218`:
+
+```javascript
+function applyFilters() {
+  let filtered = portfolioData;
+
+  // Filter by discipline
+  const currentFilter = categories[activeId].filter;
+  if (currentFilter !== "all") {
+    filtered = filtered.filter((card) => card.discipline === currentFilter);
+  }
+
+  // Filter by subcategory
+  if (currentSub) {
+    const mapped = subMapping[currentSub];
+    if (mapped) {
+      filtered = filtered.filter((card) =>
+        card.category.some((c) =>
+          c.toLowerCase().includes(mapped.toLowerCase())
+        )
+      );
+    }
+  }
+
+  // Filter by search term
+  if (searchTerm) {
+    filtered = filtered.filter(
+      (card) =>
+        card.title.some((t) =>
+          t.toLowerCase().includes(searchTerm.toLowerCase())
+        ) ||
+        card.category.some((c) =>
+          c.toLowerCase().includes(searchTerm.toLowerCase())
+        ) ||
+        card.client_name.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }
+
+  renderCards(filtered);
+}
+```
+
+## Portfolio Template Structure
+
+The portfolio item template is located in `shared/components/portfolio/index.html` and includes:
+
+- **Top Navigation**: Breadcrumbs and view controls
+- **Cover Section**: Hero image and project metadata
+- **Tabs Navigation**: Sticky navigation for sections
+- **Main Content**: Dynamic sections loaded from markdown
+- **SEO Images**: Hidden container for search engine optimization
+
+See `shared/components/portfolio/index.html:36-116` for the complete structure.
+
+## Best Practices
+
+1. **Naming Convention**: Use lowercase with hyphens for folder names (e.g., `project-name-description`)
+2. **Images**: Store portfolio images in `assets/images/portfolio/`
+3. **Unique IDs**: Ensure each portfolio item has a unique ID in the data array
+4. **SEO**: Include descriptive titles and extracts for better search visibility
+5. **Categories**: Use existing category tags when possible for consistent filtering
+
+## Related Files
+
+- Portfolio Grid System: `shared/components/index-portfolio/portfolio-grid.js`
+- Portfolio Loader: `shared/components/portfolio/portfolio-loader.js`
+- Portfolio Template: `shared/components/portfolio/index.html`
+- Cover Hydrator: `shared/components/portfolio/cover-hydrator.js`

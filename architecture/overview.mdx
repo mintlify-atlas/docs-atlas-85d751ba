@@ -1,0 +1,275 @@
+---
+title: Architecture Overview
+description: Understanding the SPA architecture of the Klef Sonatta Website
+---
+
+The Klef Sonatta Website is built as a **Single Page Application (SPA)** with a component-based architecture that leverages vanilla JavaScript for maximum performance and minimal overhead.
+
+## SPA Architecture
+
+The website uses a modern SPA approach where:
+
+- **Single entry point** (`index.html`) serves all routes
+- **Dynamic component loading** using the Load Basics system
+- **Client-side routing** with clean URL management
+- **Progressive enhancement** for optimal user experience
+
+### Key Architectural Decisions
+
+<CardGroup cols={2}>
+  <Card title="No Framework" icon="bolt">
+    Pure vanilla JavaScript for zero bundle overhead and maximum control
+  </Card>
+  <Card title="Component-Based" icon="puzzle-piece">
+    Modular architecture with reusable, isolated components
+  </Card>
+  <Card title="Variable-Driven CSS" icon="palette">
+    Design system using CSS custom properties instead of utility classes
+  </Card>
+  <Card title="Dynamic Loading" icon="arrows-rotate">
+    Smart component loading system that adjusts paths automatically
+  </Card>
+</CardGroup>
+
+## Directory Structure
+
+The project follows a clear directory structure that separates concerns:
+
+```
+klef-sonatta-website/
+├── index.html                 # Main SPA entry point
+├── assets/
+│   ├── scripts/              # Core utilities
+│   │   ├── clean-urls.js     # Clean URL management
+│   │   ├── mega-menu-spa.js  # Mega menu system
+│   │   └── scroll-lock.js    # iOS-compatible scroll locking
+│   ├── styles/               # Design system
+│   │   ├── design-system.css # Core design tokens
+│   │   ├── mega-menu-spa.css # Navigation styles
+│   │   └── css-short.css     # Utility styles
+│   ├── fonts/                # Web fonts (Inter, Google Sans)
+│   ├── images/               # Static assets
+│   └── icons/                # SVG icon system
+├── shared/
+│   └── components/           # Reusable components
+│       ├── load-basics/      # Component loader system
+│       ├── mega-menu/        # Main navigation
+│       ├── footer/           # Footer component
+│       ├── dynamic-island/   # Dynamic island UI
+│       ├── sheet/            # Bottom sheet system
+│       ├── search/           # Search functionality
+│       ├── portfolio/        # Portfolio components
+│       └── navigation/       # Navigation system
+├── portfolio/                # Portfolio project pages
+├── lab-kits/                 # Experimental components
+└── docs/                     # Documentation
+```
+
+## Routing System
+
+The website implements clean URLs using the **Clean URLs utility** (`assets/scripts/clean-urls.js`):
+
+<CodeGroup>
+```javascript clean-urls.js
+const CleanUrls = {
+  config: {
+    selector: 'a[href^="#"]',
+    scrollBehavior: {
+      behavior: "smooth",
+      block: "start",
+      inline: "nearest"
+    },
+    cleanOnLoad: true,
+    scrollOffset: 0
+  },
+
+  scrollTo(id) {
+    const element = document.getElementById(id);
+    if (!element) return false;
+
+    element.scrollIntoView(this.config.scrollBehavior);
+    element.setAttribute("tabindex", "-1");
+    element.focus({ preventScroll: true });
+    return true;
+  },
+
+  handleClick(event) {
+    const link = event.target.closest(this.config.selector);
+    if (!link) return;
+
+    const hash = link.getAttribute("href").slice(1);
+    event.preventDefault();
+    this.scrollTo(hash);
+    
+    // Keep URL clean without hash
+    history.replaceState(null, "", 
+      window.location.pathname + window.location.search);
+  }
+};
+```
+</CodeGroup>
+
+### Clean URL Features
+
+- **Hash-free URLs**: Intercepts hash links and maintains clean URLs
+- **Smooth scrolling**: Preserves smooth scroll behavior without URL pollution
+- **Accessibility**: Proper focus management for screen readers
+- **iOS compatible**: Works seamlessly on Safari and mobile browsers
+
+## Component Loading Strategy
+
+The **Load Basics** system (`shared/components/load-basics/load-basics.js`) provides intelligent component loading:
+
+<Steps>
+  <Step title="Detect Script Location">
+    Automatically determines the script's location in the file system
+  </Step>
+  <Step title="Calculate Path Prefix">
+    Computes the relative path from current page to component location
+  </Step>
+  <Step title="Load Component HTML">
+    Fetches the component template asynchronously
+  </Step>
+  <Step title="Adjust All Paths">
+    Rewrites all asset paths to work from the current page location
+  </Step>
+  <Step title="Inject Content">
+    Injects styles, HTML, and scripts in the correct order
+  </Step>
+</Steps>
+
+### Load Basics Implementation
+
+```javascript load-basics.js
+function calculatePathPrefix() {
+  const currentPath = window.location.pathname;
+  const pathParts = currentPath.split("/").filter(part => part.length > 0);
+  
+  // Remove filename if present
+  if (pathParts.length > 0 && 
+      pathParts[pathParts.length - 1].includes(".")) {
+    pathParts.pop();
+  }
+  
+  const depth = pathParts.length;
+  return "../".repeat(depth);
+}
+
+function adjustPaths(html, pathPrefix) {
+  return html.replace(
+    /(src|href|data-src|srcset)=(["'])([^"']*)([""])/gi,
+    (match, attr, quote1, path, quote2) => {
+      // Skip external URLs and absolute paths
+      if (path.startsWith('http') || 
+          path.startsWith('//') || 
+          path.startsWith('/')) {
+        return match;
+      }
+      
+      // Resolve relative to component, convert to page-relative
+      const absoluteUrl = new URL(path, componentBaseUrl);
+      const relativePath = makeRelativePath(
+        window.location.href, 
+        absoluteUrl.href
+      );
+      
+      return `${attr}=${quote1}${relativePath}${quote2}`;
+    }
+  );
+}
+```
+
+This approach allows components to be loaded from **any page depth** without manual path configuration.
+
+## State Management
+
+The application uses a **lightweight, event-driven** state management approach:
+
+- **No central store**: Each component manages its own state
+- **Custom events**: Components communicate via `CustomEvent` API
+- **DOM as state**: Leverages data attributes and CSS classes for state
+- **Global namespace**: Carefully scoped global functions for cross-component access
+
+### Example: Navigation State
+
+```javascript navigation-system.js
+let navbar, megaTopbar, backBtn, megaMenusContainer;
+let currentMegaMenu = null;
+let dynamicStyle = null;
+
+function openMegaMenu(selector) {
+  const menu = document.querySelector(selector);
+  if (!menu) return;
+  
+  // Close all mega menus
+  document.querySelectorAll('.mega-menu')
+    .forEach(m => m.classList.remove('active'));
+  
+  // Show selected menu
+  menu.classList.add('active');
+  currentMegaMenu = menu;
+  
+  // Update UI state
+  if (window.innerWidth <= 768) {
+    megaTopbar?.classList.add('active');
+    backBtn?.classList.add('visible');
+  }
+}
+```
+
+## Performance Optimizations
+
+<AccordionGroup>
+  <Accordion title="GPU Acceleration">
+    Critical interactive elements use `transform: translateZ(0)` to enable GPU acceleration:
+    ```css
+    .card, .btn, .modal, .dropdown-menu {
+      will-change: transform;
+      transform: translateZ(0);
+    }
+    ```
+  </Accordion>
+  
+  <Accordion title="Lazy Loading">
+    Components load on-demand rather than upfront, reducing initial bundle size.
+  </Accordion>
+  
+  <Accordion title="CSS Variable Engine">
+    Inline CSS variables reduce class bloat and enable dynamic styling without JavaScript.
+  </Accordion>
+  
+  <Accordion title="Event Delegation">
+    Single event listeners on parent elements handle multiple child interactions efficiently.
+  </Accordion>
+</AccordionGroup>
+
+## Browser Compatibility
+
+The architecture supports:
+
+- **Modern browsers**: Chrome, Firefox, Safari, Edge (latest versions)
+- **iOS Safari**: Full compatibility with iOS-specific scroll behaviors
+- **Progressive enhancement**: Core functionality works without JavaScript
+- **Reduced motion**: Respects `prefers-reduced-motion` for accessibility
+
+```css
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+```
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Design System" href="/architecture/design-system" icon="palette">
+    Learn about the variable-driven CSS design system
+  </Card>
+  <Card title="Components" href="/architecture/components" icon="puzzle-piece">
+    Explore the component architecture and organization
+  </Card>
+</CardGroup>

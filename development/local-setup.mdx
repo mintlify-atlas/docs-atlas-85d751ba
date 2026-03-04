@@ -1,0 +1,311 @@
+---
+title: 'Local Development Setup'
+description: 'Set up and run the Klef Sonatta website on your local machine'
+icon: 'laptop-code'
+---
+
+## Overview
+
+The Klef Sonatta website is a modern static site built with vanilla HTML, CSS, and JavaScript - no build process required. This makes local development incredibly straightforward.
+
+## Prerequisites
+
+All you need is:
+- A modern web browser (Chrome 90+, Firefox 88+, Safari 14+, or Edge 90+)
+- A local web server (optional, but recommended for development)
+- Git (for cloning the repository)
+
+## Cloning the Repository
+
+Clone the project from GitHub:
+
+```bash
+git clone https://github.com/klefagency/klef-sonatta-website.git
+cd klef-sonatta-website
+```
+
+## Running Locally
+
+### Option 1: Direct Browser Access
+
+For quick previews, simply open `index.html` in your browser:
+
+```bash
+open index.html  # macOS
+start index.html # Windows
+xdg-open index.html # Linux
+```
+
+<Warning>
+Some features like the search system and dynamic content loading may not work properly when opening files directly due to browser security restrictions (CORS).
+</Warning>
+
+### Option 2: Python HTTP Server (Recommended)
+
+Python's built-in HTTP server is perfect for development:
+
+```bash
+# Python 3
+python -m http.server 8000
+
+# Python 2 (if needed)
+python -m SimpleHTTPServer 8000
+```
+
+Then open `http://localhost:8000` in your browser.
+
+### Option 3: Node.js Serve
+
+If you have Node.js installed:
+
+```bash
+npx serve .
+```
+
+This will automatically open your browser to the local server.
+
+### Option 4: PHP Built-in Server
+
+If you have PHP installed:
+
+```bash
+php -S localhost:8000
+```
+
+### Option 5: VS Code Live Server
+
+If you use Visual Studio Code:
+
+1. Install the "Live Server" extension
+2. Right-click on `index.html`
+3. Select "Open with Live Server"
+
+This provides automatic browser refresh on file changes.
+
+## Project Structure
+
+Understanding the file organization will help you navigate the codebase:
+
+```
+klef-sonatta-website/
+├── index.html              # Main website entry point
+├── assets/
+│   ├── fonts/             # Local font files (Inter, Google Sans)
+│   ├── images/            # Optimized images and favicons
+│   │   └── portfolio/     # Portfolio project images
+│   ├── scripts/           # Core JavaScript modules
+│   │   ├── mega-menu-spa.js
+│   │   ├── scroll-lock.js
+│   │   └── clean-urls.js
+│   └── styles/            # CSS files and design system
+│       ├── design-system.css  # CSS variables and tokens
+│       ├── mega-menu-spa.css
+│       └── css-short.css
+├── shared/                # Reusable components and utilities
+│   ├── components/        # Modular UI components
+│   │   ├── mega-menu/
+│   │   ├── search/
+│   │   ├── portfolio/
+│   │   ├── hero/
+│   │   ├── footer/
+│   │   └── sheet/
+│   ├── scripts/           # Shared JavaScript utilities
+│   │   ├── app-init.js
+│   │   ├── debug-system.js
+│   │   └── seo-image-hydrator.js
+│   ├── styles/            # Shared CSS
+│   │   ├── fonts.css
+│   │   └── glass-card.css
+│   └── utilities/         # Helper functions
+│       ├── icon-loader/
+│       ├── kit-manager/
+│       └── cookies/
+├── portfolio/             # Portfolio project pages
+│   ├── casa-valentina-los-cabos-restaurant-brand/
+│   ├── fish-and-grill-los-cabos-restaurant-brand/
+│   └── hello-dish-los-cabos-branding/
+├── docs/                  # Project documentation
+│   └── public/           # Public-facing documentation
+└── lab-kits/             # Experimental components
+```
+
+## File Organization
+
+### Core Files
+
+- **`index.html`**: The main homepage containing the hero section, portfolio grid, services ticker, and all primary content
+- **`assets/styles/design-system.css`**: CSS custom properties (variables) that control the entire visual system
+- **`shared/components/`**: Modular, reusable UI components that can be used across pages
+
+### Component Architecture
+
+The site uses a modular component system:
+
+<AccordionGroup>
+  <Accordion title="Navigation Components">
+    - **Mega Menu** (`shared/components/mega-menu/`): Desktop hover-based navigation with rich content panels
+    - **Mobile Navigation**: Transforms into a full-screen app with drill-down navigation
+    - **Search System** (`shared/components/search/`): Global search with real-time results
+  </Accordion>
+
+  <Accordion title="Portfolio Components">
+    - **Portfolio Grid** (`shared/components/index-portfolio/`): Masonry layout with filtering
+    - **Portfolio Loader** (`shared/components/portfolio/`): Dynamic project loading
+    - **Progressive Image Loading**: IntersectionObserver-based lazy loading with skeletons
+  </Accordion>
+
+  <Accordion title="Visual Components">
+    - **Hero Animation** (`shared/components/hero/`): Dynamic masonry grid with 3D text effects
+    - **Services Ticker** (`shared/components/services/`): Infinite scroll showcase
+    - **Glass Card** (`shared/styles/glass-card.css`): Frosted glass UI effects
+  </Accordion>
+</AccordionGroup>
+
+## CSS Variables System
+
+The entire design system is powered by CSS custom properties defined in `assets/styles/design-system.css`:
+
+```css
+:root {
+  /* Layout variables */
+  --k-step-w: 21rem;     /* Step width */
+  --k-num-size: 4rem;    /* Number indicator size */
+  
+  /* Design tokens */
+  --d: [spacing values]
+  --pos: [positioning values]
+}
+```
+
+### Customizing the Design
+
+To modify the visual theme:
+
+1. Open `assets/styles/design-system.css`
+2. Adjust CSS variables at the root level
+3. Changes apply instantly across the entire site
+4. No compilation or build process needed
+
+## Development Workflow
+
+### Making Changes
+
+1. **Edit Files**: Modify HTML, CSS, or JavaScript files directly
+2. **Refresh Browser**: Changes are immediately visible (use Live Server for auto-refresh)
+3. **Test**: Check functionality across different screen sizes
+4. **Commit**: Use Git to track your changes
+
+### Browser DevTools
+
+Leverage browser developer tools:
+
+```javascript
+// Debug system available in console
+// Logs show component initialization
+console.log('🎨 renderImages ejecutado', data);
+console.log('✅ Portfolio item fetched:', json.data.post);
+```
+
+### Live Editing CSS Variables
+
+Use browser DevTools to experiment:
+
+1. Open DevTools (F12 or Cmd+Option+I)
+2. Navigate to Elements/Inspector
+3. Find `:root` styles
+4. Edit CSS variables in real-time
+5. Copy working values back to `design-system.css`
+
+## Testing Features
+
+### Navigation Testing
+
+- **Desktop**: Hover over menu items to test mega menu panels
+- **Mobile**: Resize browser to < 768px to test mobile navigation
+- **Search**: Test search functionality with project names and tags
+
+### Portfolio Testing
+
+- **Image Loading**: Scroll through portfolio pages to see progressive loading
+- **Filters**: Test portfolio filtering and search
+- **Responsive Grid**: Check grid adapts to different screen sizes
+
+### Performance Testing
+
+- Use Lighthouse in Chrome DevTools
+- Target scores: 95+ in Performance, Accessibility, and SEO
+- Check Core Web Vitals (LCP, FID, CLS)
+
+## Common Development Tasks
+
+### Adding a New Portfolio Project
+
+1. Create a new folder in `portfolio/` with the project slug
+2. Add an `index.html` file based on existing templates
+3. Add project images to `assets/images/portfolio/`
+4. Update portfolio data structure if using GraphQL/WordPress
+
+### Modifying Navigation
+
+1. Edit the mega menu structure in `index.html`
+2. Styles are in `assets/styles/mega-menu-spa.css`
+3. Logic is in `assets/scripts/mega-menu-spa.js`
+
+### Updating Styles
+
+1. Global changes: Edit `assets/styles/design-system.css`
+2. Component-specific: Edit the component's CSS file in `shared/components/`
+3. Use the variable system when possible for consistency
+
+## Browser Support
+
+The site is optimized for modern browsers:
+
+- ✅ Chrome 90+
+- ✅ Firefox 88+
+- ✅ Safari 14+
+- ✅ Edge 90+
+
+Features used:
+- CSS Grid and Flexbox
+- CSS Custom Properties (Variables)
+- IntersectionObserver API
+- ES6+ JavaScript
+- WebP and AVIF image formats
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Search Not Working">
+    This is usually a CORS issue. Make sure you're using a local server (not opening files directly).
+  </Accordion>
+
+  <Accordion title="Images Not Loading">
+    - Check that image paths are correct
+    - Verify images exist in `assets/images/`
+    - Check browser console for 404 errors
+  </Accordion>
+
+  <Accordion title="Styles Not Applying">
+    - Check CSS file paths in HTML
+    - Look for JavaScript console errors
+    - Verify CSS variables are defined in `:root`
+  </Accordion>
+
+  <Accordion title="Mobile Menu Not Working">
+    - Check that `mega-menu-spa.js` is loaded
+    - Verify viewport meta tag is present
+    - Test in DevTools mobile emulation
+  </Accordion>
+</AccordionGroup>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Deployment" icon="rocket" href="/development/deployment">
+    Learn how to deploy your site to production
+  </Card>
+  <Card title="Design System" icon="palette" href="/architecture/design-system">
+    Explore the design system and CSS variables
+  </Card>
+</CardGroup>

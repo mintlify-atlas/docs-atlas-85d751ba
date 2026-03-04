@@ -1,0 +1,640 @@
+---
+title: Component Architecture
+description: Understanding the component organization and loading system
+---
+
+The Klef Sonatta Website uses a **modular component architecture** where each component is self-contained with its own HTML, CSS, and JavaScript.
+
+## Component Organization
+
+All shared components live in `shared/components/` with a consistent structure:
+
+```
+shared/components/
+├── load-basics/           # Component loader system
+│   ├── load-basics.html  # Base template with navigation/footer
+│   └── load-basics.js    # Smart path-adjusting loader
+├── mega-menu/            # Main navigation component
+│   ├── mega-menu.html    # Navigation markup
+│   ├── mega-menu.css     # Navigation styles
+│   └── mega-menu.js      # Navigation behavior
+├── navigation/           # Navigation system
+│   └── navigation-system.js
+├── footer/               # Footer component
+│   ├── footer-loader.js
+│   └── footer.css
+├── dynamic-island/       # iOS-style dynamic island
+│   ├── dynamic-island.html
+│   ├── dynamic-island.css
+│   └── dynamic-island.js
+├── sheet/                # Bottom sheet system
+│   ├── sheet-system.js
+│   ├── sheet-content.js
+│   ├── sheet-handlers.js
+│   ├── sheet-templates.js
+│   └── sheet.css
+├── search/               # Search functionality
+│   ├── search-system.js
+│   ├── search-filter.css
+│   ├── query-parser.js
+│   └── match.js
+├── portfolio/            # Portfolio components
+│   ├── portfolio-loader.js
+│   ├── portfolio-item-fetch.js
+│   ├── cover-hydrator.js
+│   └── tabs-navigation.js
+└── adaptive-sheet/       # Adaptive bottom sheet
+    └── adaptive-sheet.js
+```
+
+## Component Loading System
+
+The **Load Basics** component provides the foundation for all pages:
+
+### How It Works
+
+<Steps>
+  <Step title="Include the Loader">
+    Any page can load the base template by including the script:
+    ```html
+    <script src="../../shared/components/load-basics/load-basics.js"></script>
+    ```
+  </Step>
+  
+  <Step title="Automatic Path Detection">
+    The loader detects where it's being called from:
+    ```javascript
+    const scriptUrl = new URL(document.currentScript.src);
+    const componentBaseUrl = scriptUrl.href.replace('load-basics.js', '');
+    ```
+  </Step>
+  
+  <Step title="Calculate Relative Paths">
+    Computes the path difference between current page and component:
+    ```javascript
+    function calculatePathPrefix() {
+      const currentPath = window.location.pathname;
+      const pathParts = currentPath.split('/').filter(part => part);
+      const depth = pathParts.length;
+      return '../'.repeat(depth);
+    }
+    ```
+  </Step>
+  
+  <Step title="Load and Inject">
+    Fetches the component, adjusts all paths, and injects into the page:
+    ```javascript
+    const response = await fetch(componentUrl);
+    let htmlContent = await response.text();
+    htmlContent = adjustPaths(htmlContent, pathPrefix);
+    injectStyles(styles);
+    injectHTML(body);
+    executeScripts(scripts);
+    ```
+  </Step>
+</Steps>
+
+### Load Basics Template
+
+The `load-basics.html` file contains:
+
+- **Navigation header** with mega menu
+- **Favicons** and meta tags
+- **Base styles** from the design system
+- **Core scripts** (scroll lock, clean URLs, navigation)
+- **Footer** component
+
+This ensures every page has consistent navigation and branding:
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- Favicons -->
+    <link rel="icon" href="../../../assets/images/favicons/favicon-32x32.png">
+    
+    <!-- Design System -->
+    <link rel="stylesheet" href="../../../assets/styles/design-system.css">
+    <link rel="stylesheet" href="../../../assets/styles/mega-menu-spa.css">
+  </head>
+  <body>
+    <!-- Navigation Component -->
+    <nav id="main-nav">
+      <!-- Mega menu markup -->
+    </nav>
+    
+    <!-- Footer Component -->
+    <footer>
+      <!-- Footer markup -->
+    </footer>
+    
+    <!-- Core Scripts -->
+    <script src="../../../assets/scripts/scroll-lock.js"></script>
+    <script src="../../../assets/scripts/clean-urls.js"></script>
+    <script src="../../../shared/components/navigation/navigation-system.js"></script>
+  </body>
+</html>
+```
+
+## Navigation Component
+
+The navigation system is one of the most complex components:
+
+### Navigation System (`navigation-system.js`)
+
+Provides the core navigation functionality:
+
+<CodeGroup>
+```javascript Menu Toggle
+function toggleMenu() {
+  const isOpen = navbar.classList.toggle('mobile-open');
+  
+  // iOS-compatible scroll lock
+  if (typeof ScrollLock !== 'undefined') {
+    if (isOpen) {
+      ScrollLock.lock();
+    } else {
+      ScrollLock.unlock();
+    }
+  }
+  
+  // Hide Dynamic Island when menu opens
+  if (typeof hideDynamicIsland === 'function') {
+    hideDynamicIsland();
+  }
+}
+```
+
+```javascript Mega Menu
+function openMegaMenu(selector) {
+  const menu = document.querySelector(selector);
+  if (!menu) return;
+  
+  // Close all mega menus
+  document.querySelectorAll('.mega-menu')
+    .forEach(m => m.classList.remove('active'));
+  
+  // Show selected menu
+  menu.classList.add('active');
+  currentMegaMenu = menu;
+  
+  // Mobile-specific UI
+  if (window.innerWidth <= 768) {
+    megaTopbar?.classList.add('active');
+    backBtn?.classList.add('visible');
+  }
+}
+```
+
+```javascript Event Listeners
+function initNavigationListeners() {
+  // Toggle menu buttons
+  document.querySelectorAll('[data-action="toggle-menu"]')
+    .forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        toggleMenu();
+      });
+    });
+  
+  // Mega menu items (mobile click)
+  document.querySelectorAll('[data-mega]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      if (window.innerWidth <= 768) {
+        e.preventDefault();
+        const selector = btn.getAttribute('data-mega');
+        openMegaMenu(selector);
+      }
+    });
+    
+    // Desktop hover
+    btn.addEventListener('mouseenter', (e) => {
+      if (window.innerWidth > 768) {
+        const selector = btn.getAttribute('data-mega');
+        openMegaMenu(selector);
+      }
+    });
+  });
+}
+```
+</CodeGroup>
+
+### Responsive Behavior
+
+The navigation adapts based on viewport width:
+
+<Tabs>
+  <Tab title="Mobile (≤768px)">
+    - **Full-screen overlay** with slide-in animation
+    - **Mega menu items** open in a separate view with back button
+    - **Scroll locking** prevents body scroll when open
+    - **Touch-optimized** tap targets
+  </Tab>
+  
+  <Tab title="Desktop (>768px)">
+    - **Hover-triggered** mega menus
+    - **Dropdown panels** appear below navigation bar
+    - **Mouse tracking** closes menus when cursor leaves area
+    - **Keyboard navigation** with ESC to close
+  </Tab>
+</Tabs>
+
+## Dynamic Island Component
+
+An iOS-inspired notification UI that appears at the top of the screen:
+
+```javascript dynamic-island.js
+let islandTimeout;
+const islandContainer = document.querySelector('.dynamic-island-container');
+const islandContent = document.querySelector('.dynamic-island-content');
+
+function showDynamicIsland(message, duration = 3000) {
+  if (!islandContainer || !islandContent) return;
+  
+  // Update content
+  islandContent.textContent = message;
+  
+  // Show island
+  islandContainer.classList.add('visible');
+  
+  // Auto-hide after duration
+  clearTimeout(islandTimeout);
+  islandTimeout = setTimeout(() => {
+    hideDynamicIsland();
+  }, duration);
+}
+
+function hideDynamicIsland() {
+  islandContainer?.classList.remove('visible');
+}
+```
+
+### Usage
+
+```javascript
+// Show a notification
+showDynamicIsland('Page saved successfully', 2000);
+
+// Show an error
+showDynamicIsland('Failed to load content', 4000);
+```
+
+## Sheet Component System
+
+A bottom sheet UI system inspired by iOS, organized across multiple files:
+
+### Architecture
+
+<CardGroup cols={2}>
+  <Card title="sheet-system.js" icon="gear">
+    Core sheet lifecycle and state management
+  </Card>
+  <Card title="sheet-content.js" icon="file">
+    Content loading and rendering
+  </Card>
+  <Card title="sheet-handlers.js" icon="hand">
+    Touch gestures and interactions
+  </Card>
+  <Card title="sheet-templates.js" icon="layer-group">
+    Predefined sheet configurations
+  </Card>
+</CardGroup>
+
+### Sheet System (`sheet-system.js`)
+
+```javascript
+function loadSheet(config) {
+  const sheet = createSheet(config);
+  document.body.appendChild(sheet);
+  
+  // Trigger opening animation
+  requestAnimationFrame(() => {
+    sheet.classList.add('open');
+    ScrollLock.lock();
+  });
+  
+  return sheet;
+}
+
+function createSheet(config) {
+  const sheet = document.createElement('div');
+  sheet.className = 'adaptive-sheet';
+  sheet.innerHTML = `
+    <div class="sheet-backdrop"></div>
+    <div class="sheet-container">
+      <div class="sheet-handle"></div>
+      <div class="sheet-content">
+        ${config.content || ''}
+      </div>
+    </div>
+  `;
+  
+  attachSheetHandlers(sheet);
+  return sheet;
+}
+```
+
+### Sheet Templates
+
+Predefined configurations for common use cases:
+
+```javascript sheet-templates.js
+const sheetUtils = {
+  createContactConfig(source) {
+    return {
+      title: 'Get in Touch',
+      content: `
+        <form class="contact-form">
+          <input type="text" placeholder="Your name" required>
+          <input type="email" placeholder="Email" required>
+          <textarea placeholder="Message" required></textarea>
+          <button class="btn btn-primary">Send Message</button>
+        </form>
+      `,
+      source: source
+    };
+  },
+  
+  createInfoConfig(title, body) {
+    return {
+      title: title,
+      content: `<div class="info-content">${body}</div>`
+    };
+  }
+};
+```
+
+## Portfolio Components
+
+Specialized components for portfolio functionality:
+
+### Portfolio Loader
+
+Handles dynamic loading of portfolio projects:
+
+```javascript portfolio-loader.js
+async function loadPortfolioItem(slug) {
+  const data = await fetchPortfolioData(slug);
+  
+  // Hydrate the template
+  hydratePortfolioTemplate(data);
+  
+  // Initialize interactive elements
+  initTabNavigation();
+  initImageGallery();
+}
+
+function hydratePortfolioTemplate(data) {
+  document.getElementById('project-title').textContent = data.title;
+  document.getElementById('hero-visual').innerHTML = `
+    <img src="${data.coverImage}" alt="${data.title}">
+  `;
+  document.getElementById('main-content').innerHTML = data.content;
+  
+  // Update meta tags for SEO
+  updateMetaTags(data);
+}
+```
+
+### Tab Navigation
+
+Smooth tab switching for portfolio sections:
+
+```javascript tabs-navigation.js
+function initTabNavigation() {
+  const tabs = document.querySelectorAll('.tab');
+  const panels = document.querySelectorAll('.tab-panel');
+  
+  tabs.forEach(tab => {
+    tab.addEventListener('click', (e) => {
+      e.preventDefault();
+      
+      // Update active states
+      tabs.forEach(t => t.classList.remove('active'));
+      panels.forEach(p => p.classList.remove('active'));
+      
+      tab.classList.add('active');
+      const targetPanel = document.querySelector(tab.dataset.target);
+      targetPanel?.classList.add('active');
+    });
+  });
+}
+```
+
+## Search Component
+
+Powerful search system with filtering:
+
+### Search System Architecture
+
+<Steps>
+  <Step title="Query Parser">
+    Parses search queries and extracts filters:
+    ```javascript
+    parseQuery("design tag:branding type:portfolio")
+    // Returns: { terms: ['design'], filters: { tag: 'branding', type: 'portfolio' } }
+    ```
+  </Step>
+  
+  <Step title="Match Engine">
+    Scores items based on query relevance:
+    ```javascript
+    calculateScore(item, query)
+    // Returns: { score: 0.85, matches: ['title', 'description'] }
+    ```
+  </Step>
+  
+  <Step title="Results Rendering">
+    Displays filtered and sorted results with highlighting
+  </Step>
+</Steps>
+
+### Query Parser (`query-parser.js`)
+
+```javascript
+const QueryParser = {
+  parse(queryString) {
+    const filters = {};
+    const terms = [];
+    
+    // Extract filters (tag:value, type:value)
+    const filterRegex = /(\w+):(\w+)/g;
+    queryString.replace(filterRegex, (match, key, value) => {
+      filters[key] = value;
+      return '';
+    });
+    
+    // Extract search terms
+    const cleanQuery = queryString.replace(filterRegex, '').trim();
+    if (cleanQuery) {
+      terms.push(...cleanQuery.split(/\s+/));
+    }
+    
+    return { terms, filters };
+  }
+};
+```
+
+## Component Communication
+
+Components communicate through multiple patterns:
+
+### Global Functions
+
+Core functions exposed to global scope:
+
+```javascript
+window.toggleMenu = toggleMenu;
+window.openMegaMenu = openMegaMenu;
+window.showDynamicIsland = showDynamicIsland;
+window.loadSheet = loadSheet;
+```
+
+### Custom Events
+
+Components dispatch events for loose coupling:
+
+```javascript
+// Dispatch event
+window.dispatchEvent(new CustomEvent('loadBasicsReady', {
+  detail: { timestamp: Date.now() }
+}));
+
+// Listen for event
+window.addEventListener('loadBasicsReady', (e) => {
+  console.log('Load Basics ready at:', e.detail.timestamp);
+});
+```
+
+### Data Attributes
+
+HTML data attributes trigger behavior:
+
+```html
+<!-- Toggle menu -->
+<button data-action="toggle-menu">Menu</button>
+
+<!-- Open mega menu -->
+<a data-mega="#services-menu">Services</a>
+
+<!-- Open contact sheet -->
+<button data-action="open-contact-sheet">Contact Us</button>
+```
+
+## Component Lifecycle
+
+Typical component initialization flow:
+
+<Steps>
+  <Step title="DOM Ready">
+    Wait for DOM to be ready:
+    ```javascript
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', init);
+    } else {
+      init();
+    }
+    ```
+  </Step>
+  
+  <Step title="Query Elements">
+    Find required DOM elements:
+    ```javascript
+    function init() {
+      navbar = document.getElementById('main-nav');
+      megaMenus = document.querySelectorAll('.mega-menu');
+    }
+    ```
+  </Step>
+  
+  <Step title="Attach Listeners">
+    Set up event listeners:
+    ```javascript
+    document.querySelectorAll('[data-action]').forEach(el => {
+      el.addEventListener('click', handleAction);
+    });
+    ```
+  </Step>
+  
+  <Step title="Initial State">
+    Set initial component state:
+    ```javascript
+    closeMenu();
+    updateActiveStates();
+    ```
+  </Step>
+</Steps>
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion title="Self-Contained Components">
+    Each component manages its own state and doesn't rely on global state:
+    ```javascript
+    // Good: Component-scoped state
+    (function() {
+      let isOpen = false;
+      let currentItem = null;
+      
+      function toggle() {
+        isOpen = !isOpen;
+      }
+    })();
+    ```
+  </Accordion>
+  
+  <Accordion title="Defensive Initialization">
+    Always check if required elements exist:
+    ```javascript
+    function init() {
+      const navbar = document.getElementById('main-nav');
+      if (!navbar) {
+        console.warn('Navbar not found, skipping initialization');
+        return;
+      }
+      // Continue initialization
+    }
+    ```
+  </Accordion>
+  
+  <Accordion title="Event Delegation">
+    Use event delegation for dynamic content:
+    ```javascript
+    // Good: Event delegation
+    document.addEventListener('click', (e) => {
+      const btn = e.target.closest('[data-action]');
+      if (btn) handleAction(btn);
+    });
+    
+    // Bad: Direct binding (won't work for dynamic elements)
+    document.querySelectorAll('[data-action]').forEach(btn => {
+      btn.addEventListener('click', handleAction);
+    });
+    ```
+  </Accordion>
+  
+  <Accordion title="Cleanup on Destroy">
+    Remove event listeners when component is destroyed:
+    ```javascript
+    function destroy() {
+      document.removeEventListener('click', handleClick);
+      ScrollLock.unlock();
+      currentMegaMenu = null;
+    }
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Design System" href="/architecture/design-system" icon="palette">
+    Learn how components use the design system
+  </Card>
+  <Card title="Overview" href="/architecture/overview" icon="book">
+    Return to architecture overview
+  </Card>
+</CardGroup>

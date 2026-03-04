@@ -1,0 +1,356 @@
+---
+title: Customizing the Menu
+description: Learn how to modify and customize the mega menu navigation system
+---
+
+The Klef Sonatta website uses a sophisticated mega menu system that adapts between mobile and desktop views. The menu supports multi-level navigation with hover effects on desktop and tap navigation on mobile.
+
+## Menu Architecture
+
+The menu system consists of three main components:
+
+1. **Menu Configuration** (`assets/scripts/mega-menu-spa.js`) - Core menu logic
+2. **Menu HTML Structure** (`shared/components/mega-menu/mega-menu.html`) - Menu markup
+3. **Menu Styles** (`shared/components/mega-menu/mega-menu.css`) - Visual styling
+
+## Menu Configuration
+
+The menu behavior is configured in `assets/scripts/mega-menu-spa.js`:
+
+```javascript title="assets/scripts/mega-menu-spa.js:1-14"
+const MENU_CONFIG = {
+  el: {
+    nav: "#main-nav",
+    barraTop: ".mega-topbar",
+    btnVolver: ".back-btn",
+    btnCerrar: ".close-btn",
+    botones: "a[data-name]",
+    submenus: ".mega-menu",
+  },
+  viewport: {
+    movil: 768,
+  },
+};
+```
+
+### Configuration Options
+
+| Property | Description | Default Value |
+|----------|-------------|---------------|
+| `el.nav` | Main navigation container | `#main-nav` |
+| `el.barraTop` | Top bar for mobile navigation | `.mega-topbar` |
+| `el.btnVolver` | Back button selector | `.back-btn` |
+| `el.btnCerrar` | Close button selector | `.close-btn` |
+| `el.botones` | Menu trigger buttons | `a[data-name]` |
+| `el.submenus` | Mega menu containers | `.mega-menu` |
+| `viewport.movil` | Mobile breakpoint in pixels | `768` |
+
+## Menu HTML Structure
+
+The mega menu uses a two-part structure: menu buttons and menu panels.
+
+### Menu Buttons
+
+Menu trigger buttons use `data-name` and `data-mega` attributes:
+
+```html
+<a href="#" data-name="Diseno" data-mega="#Diseno">
+  Diseño y Media
+</a>
+```
+
+- `data-name`: Used for hover detection on desktop
+- `data-mega`: CSS selector for the corresponding mega menu panel
+
+### Mega Menu Panels
+
+Each mega menu panel contains a sidebar and main content area:
+
+```html title="shared/components/mega-menu/mega-menu.html:4-40"
+<div class="mega-menus-container">
+  <div class="mega-menu" id="Diseno">
+    <div class="mega-content">
+      <div class="mega-sidebar">
+        <div class="mega-sidebar-title">Diseño y Media</div>
+        <a href="#">
+          <span>Branding</span>
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+          </svg>
+        </a>
+        <a href="#">
+          <span>Studio Multimedia</span>
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+          </svg>
+        </a>
+      </div>
+
+      <div class="mega-main">
+        <div class="mega-featured">
+          <div class="featured-image">🎨</div>
+          <div class="featured-content">
+            <div class="featured-tag">By Klef•Brand</div>
+            <h3>Branding</h3>
+            <p>Descubre las marcas que hemos desarrollado y nuestras estrategias de diseño</p>
+            <a href="#" class="btn-primary">Ir a Brands</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+```
+
+## Adding a New Menu Section
+
+### Step 1: Add Menu Button
+
+Add a new trigger button in your navigation:
+
+```html
+<a href="#" data-name="Services" data-mega="#Services">
+  Services
+</a>
+```
+
+### Step 2: Create Menu Panel
+
+Add the corresponding mega menu panel:
+
+```html
+<div class="mega-menu" id="Services">
+  <div class="mega-content">
+    <div class="mega-sidebar">
+      <div class="mega-sidebar-title">Our Services</div>
+      <a href="#">
+        <span>Service One</span>
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+        </svg>
+      </a>
+      <a href="#">
+        <span>Service Two</span>
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+        </svg>
+      </a>
+    </div>
+
+    <div class="mega-main">
+      <div class="mega-featured">
+        <div class="featured-image" style="background: linear-gradient(135deg, #667eea, #764ba2);">⚡</div>
+        <div class="featured-content">
+          <div class="featured-tag">By Company</div>
+          <h3>Featured Service</h3>
+          <p>Description of your featured service</p>
+          <a href="#" class="btn-primary">Learn More</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+```
+
+## Menu Behavior
+
+The menu system handles different behaviors for mobile and desktop:
+
+### Desktop Behavior (Hover)
+
+```javascript title="assets/scripts/mega-menu-spa.js:51-59"
+megaBtns.forEach((btn) => {
+  btn.addEventListener("mouseenter", (e) => {
+    if (window.innerWidth > MENU_CONFIG.viewport.movil) {
+      const value = e.currentTarget.dataset.name;
+      if (navbar) navbar.dataset.mega = value;
+      applyDynamicStyle(value);
+    }
+  });
+});
+```
+
+On desktop, hovering over a menu button:
+1. Sets `data-mega` attribute on navbar
+2. Applies dynamic CSS to show the panel
+3. Panel remains visible while hovering menu or panel
+
+### Mobile Behavior (Click)
+
+```javascript title="assets/scripts/mega-menu-spa.js:40-48"
+megaBtns.forEach((btn) => {
+  btn.addEventListener("click", (e) => {
+    if (window.innerWidth <= MENU_CONFIG.viewport.movil) {
+      e.preventDefault();
+      const selector = btn.dataset.mega;
+      if (selector) openMegaMenu(selector);
+    }
+  });
+});
+```
+
+On mobile, clicking a menu button:
+1. Prevents default link behavior
+2. Opens the mega menu panel
+3. Shows back button and top bar
+4. Locks body scroll
+
+## Menu State Management
+
+The menu system maintains state using JavaScript variables:
+
+```javascript title="assets/scripts/mega-menu-spa.js:17-18"
+let currentMegaMenu = null;
+let navigationStack = [];
+```
+
+### Opening a Menu
+
+```javascript title="assets/scripts/mega-menu-spa.js:110-119"
+function openMegaMenu(selector) {
+  const menu = document.querySelector(selector);
+  if (!menu) return console.error(`No se encontró el mega menú: ${selector}`);
+  megaMenus.forEach((m) => m.classList.remove("active"));
+  navigationStack = [selector];
+  currentMegaMenu = menu;
+  menu.classList.add("active");
+  if (megaTopbar) megaTopbar.classList.add("active");
+  if (backBtn) backBtn.classList.add("visible");
+}
+```
+
+### Closing the Menu
+
+```javascript title="assets/scripts/mega-menu-spa.js:88-98"
+function closeMenu() {
+  if (navbar) navbar.classList.remove("mobile-open");
+  if (megaTopbar) megaTopbar.classList.remove("active");
+  if (backBtn) backBtn.classList.remove("visible");
+  ScrollLock.unlock();
+  megaMenus.forEach((menu) => menu.classList.remove("active"));
+  currentMegaMenu = null;
+  navigationStack = [];
+  removeDynamicStyle();
+}
+```
+
+## Dynamic Styling
+
+The menu uses runtime CSS injection for hover effects:
+
+```javascript title="assets/scripts/mega-menu-spa.js:122-136"
+function applyDynamicStyle(value) {
+  removeDynamicStyle();
+  dynamicStyle = document.createElement("style");
+  dynamicStyle.dataset.origin = "mega-menu-runtime";
+  dynamicStyle.textContent = `
+    @media (min-width: ${MENU_CONFIG.viewport.movil + 1}px) {
+      [data-mega*="${value}"]:hover + .mega-menus-container ${value},
+      [data-mega*="${value}"] + .mega-menus-container ${value}:hover {
+        display: flex;
+        flex-direction: column;
+      }
+    }
+  `;
+  document.head.appendChild(dynamicStyle);
+}
+```
+
+This creates a temporary `<style>` tag that shows the menu panel when hovering the button or panel itself.
+
+## Web Component Version
+
+The system also includes a Web Component version with enhanced features:
+
+```javascript title="shared/components/mega-menu/mega-menu.js:5-41"
+class MegaMenuSystem extends HTMLElement {
+  constructor() {
+    super();
+    
+    this.config = {
+      selectors: {
+        nav: "#main-nav",
+        barraTop: ".mega-topbar",
+        btnVolver: ".back-btn",
+        btnCerrar: ".close-btn",
+        botones: "a[data-name]",
+        submenus: ".mega-menu",
+      },
+      viewport: {
+        mobile: 768,
+      },
+      debounceDelay: 150,
+    };
+
+    this.state = {
+      currentMegaMenu: null,
+      navigationStack: [],
+      dynamicStyle: null,
+      isMobile: window.innerWidth <= this.config.viewport.mobile,
+    };
+
+    this.elements = {};
+
+    // Bind methods
+    this.handleResize = this.debounce(this.onResize.bind(this), this.config.debounceDelay);
+    this.handleMouseMove = this.onMouseMove.bind(this);
+    this.handleButtonClick = this.onButtonClick.bind(this);
+    this.handleButtonHover = this.onButtonHover.bind(this);
+  }
+}
+
+customElements.define('mega-menu-system', MegaMenuSystem);
+```
+
+See `shared/components/mega-menu/mega-menu.js:1-325` for the complete Web Component implementation.
+
+## Existing Menu Sections
+
+The default menu includes three sections:
+
+### 1. Diseño y Media (`#Diseno`)
+- Branding
+- Studio Multimedia
+- Publicidad
+
+### 2. Tecnología (`#Tecnologia`)
+- Desarrollo Web
+- Apps Móviles
+- E-commerce
+
+### 3. Marketing (`#Marketing`)
+- Social Media
+- SEO/SEM
+- Content Strategy
+
+See `shared/components/mega-menu/mega-menu.html:1-119` for the complete markup.
+
+## Customization Tips
+
+1. **Featured Images**: Use emoji or gradient backgrounds for visual impact
+2. **Consistent Structure**: Keep the sidebar + main layout for familiarity
+3. **Responsive Icons**: Use SVG icons for crisp display at any size
+4. **Hover States**: CSS handles hover styling automatically via dynamic injection
+5. **Mobile First**: Test mobile navigation thoroughly as it uses different patterns
+
+## Scroll Lock Integration
+
+The menu integrates with a scroll lock utility to prevent body scrolling:
+
+```javascript
+if (isOpen) {
+  ScrollLock.lock();
+} else {
+  ScrollLock.unlock();
+}
+```
+
+This is handled automatically by the menu system in both the SPA and Web Component versions.
+
+## Related Files
+
+- Menu Configuration: `assets/scripts/mega-menu-spa.js`
+- Menu HTML: `shared/components/mega-menu/mega-menu.html`
+- Menu Styles: `shared/components/mega-menu/mega-menu.css`
+- Web Component: `shared/components/mega-menu/mega-menu.js`
+- Scroll Lock: `assets/scripts/scroll-lock.js`

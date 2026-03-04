@@ -1,0 +1,322 @@
+---
+title: Creating Components
+description: Learn how to create and structure reusable components in the Klef Sonatta website
+---
+
+The Klef Sonatta website uses a modular component architecture. Components are self-contained units that include their own HTML, CSS, and JavaScript.
+
+## Component Directory Structure
+
+Components are located in `~/workspace/source/shared/components/`. Each component has its own directory:
+
+```
+shared/components/
+├── dynamic-island/
+│   ├── dynamic-island.css
+│   ├── dynamic-island.html
+│   └── dynamic-island.js
+├── mega-menu/
+│   ├── mega-menu.css
+│   ├── mega-menu.html
+│   └── mega-menu.js
+├── footer/
+│   ├── footer.css
+│   └── footer-loader.js
+└── load-basics/
+    ├── load-basics.html
+    └── load-basics.js
+```
+
+## Component Types
+
+There are two main component patterns in the system:
+
+### 1. Static Components
+
+Components with predefined HTML that gets loaded dynamically.
+
+### 2. Web Components
+
+Custom elements using the Web Components API for more complex functionality.
+
+## Creating a New Component
+
+### Step 1: Create Component Directory
+
+Create a new folder in `shared/components/`:
+
+```bash
+mkdir shared/components/my-component
+```
+
+### Step 2: Create Component Files
+
+Create the three core files:
+
+#### HTML Structure
+
+```html title="shared/components/my-component/my-component.html"
+<div class="my-component">
+  <div class="my-component-content">
+    <!-- Component markup -->
+  </div>
+</div>
+```
+
+#### CSS Styles
+
+```css title="shared/components/my-component/my-component.css"
+.my-component {
+  /* Component styles */
+}
+
+.my-component-content {
+  /* Content styles */
+}
+```
+
+#### JavaScript Logic
+
+```javascript title="shared/components/my-component/my-component.js"
+/**
+ * My Component - Description
+ */
+
+(function () {
+  "use strict";
+
+  // Check if component should initialize
+  const componentElement = document.querySelector(".my-component");
+  
+  if (!componentElement) {
+    console.log("[MyComponent] Element not found. Skipping initialization.");
+    return;
+  }
+
+  console.log("[MyComponent] Initializing...");
+
+  // Component initialization logic
+  function init() {
+    // Setup code here
+  }
+
+  // Initialize when DOM is ready
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", init);
+  } else {
+    init();
+  }
+})();
+```
+
+## Component Loading Patterns
+
+The system uses two main loading patterns:
+
+### Pattern 1: Smart Runtime Loader
+
+Used by `load-basics.js` and `portfolio-loader.js`. This pattern dynamically loads HTML and adjusts all relative paths:
+
+```javascript title="Example from load-basics.js:10-44"
+const scriptUrl = new URL(document.currentScript.src);
+const componentBaseUrl = scriptUrl.href.replace("load-basics.js", "");
+
+function calculatePathPrefix() {
+  const currentPath = window.location.pathname;
+  const pathParts = currentPath.split("/").filter((part) => part.length > 0);
+  
+  if (pathParts.length > 0 && pathParts[pathParts.length - 1].includes(".")) {
+    pathParts.pop();
+  }
+  
+  const depth = pathParts.length;
+  const prefix = "../".repeat(depth);
+  
+  return prefix;
+}
+```
+
+This pattern:
+1. Detects the script's location
+2. Calculates path depth from current page
+3. Adjusts all relative paths in loaded HTML
+4. Injects styles, HTML, and scripts in order
+
+See `shared/components/load-basics/load-basics.js:1-318` for the complete implementation.
+
+### Pattern 2: Web Component Class
+
+Used by the mega menu system. This pattern creates a custom HTML element:
+
+```javascript title="Example from mega-menu.js:5-67"
+class MegaMenuSystem extends HTMLElement {
+  constructor() {
+    super();
+    
+    // Configuration
+    this.config = {
+      selectors: {
+        nav: "#main-nav",
+        barraTop: ".mega-topbar",
+        btnVolver: ".back-btn",
+        btnCerrar: ".close-btn",
+        botones: "a[data-name]",
+        submenus: ".mega-menu",
+      },
+      viewport: {
+        mobile: 768,
+      },
+    };
+
+    // State
+    this.state = {
+      currentMegaMenu: null,
+      navigationStack: [],
+      dynamicStyle: null,
+      isMobile: window.innerWidth <= this.config.viewport.mobile,
+    };
+
+    // References DOM
+    this.elements = {};
+  }
+
+  connectedCallback() {
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', () => this.init());
+    } else {
+      this.init();
+    }
+  }
+
+  init() {
+    this.cacheElements();
+    this.setupEventListeners();
+  }
+}
+
+// Register the Web Component
+customElements.define('mega-menu-system', MegaMenuSystem);
+```
+
+See `shared/components/mega-menu/mega-menu.js:1-325` for the full implementation.
+
+## Advanced Component Example: Dynamic Island
+
+The Dynamic Island component is a sophisticated example that demonstrates:
+
+- **Preset System**: Multiple predefined configurations
+- **Template Rendering**: Dynamic HTML generation from data
+- **State Management**: Internal state tracking
+- **Event Handling**: Click, scroll, and keyboard events
+- **Namespacing**: Global API under `window.Klef.DynamicIsland`
+
+```javascript title="Dynamic Island preset structure from dynamic-island.js:207-236"
+static presets = {
+  default: {
+    getHtmlStructure(data) {
+      return `
+      <div class="island-content">
+        <div class="center-content" data-action="search">
+          <span class="search-icon">${data.search.icon}</span>
+          <span>${data.search.name}</span>
+        </div>
+      </div>`;
+    },
+    data: {
+      search: {
+        icon: ICONS.search,
+        name: "Buscar",
+        function: SafeActions.openSearch,
+      },
+    },
+  },
+
+  search_menu_cart: {
+    getHtmlStructure(data) {
+      return `
+      <div class="island-content">
+        <button class="island-btn secondary" data-action="menu">
+          <span class="icon">${data.menu.icon}</span>
+          <span>${data.menu.name}</span>
+        </button>
+        <!-- More buttons -->
+      </div>`;
+    },
+    data: {
+      menu: { icon: ICONS.hamMenu, name: "Menú", function: toggleMenu },
+      search: { icon: ICONS.search, name: "Buscar", function: openSearch },
+      cart: { icon: ICONS.cartBag, name: "Carrito", function: openCart },
+    },
+  },
+};
+```
+
+See `shared/components/dynamic-island/dynamic-island.js:1-1254` for the complete implementation.
+
+## Component Initialization Checks
+
+Always check if required elements exist before initializing:
+
+```javascript title="Example from portfolio-grid.js:11-27"
+const requiredElements = [
+  "#tabsList",
+  "#cardGrid",
+  "#tab-search__bar",
+  "#results-count",
+];
+
+const allExist = requiredElements.every(
+  (selector) => document.querySelector(selector) !== null
+);
+
+if (!allExist) {
+  console.log(
+    "[PortfolioGrid] Required elements not found. Skipping initialization."
+  );
+  return;
+}
+```
+
+## Component Communication
+
+Components communicate through:
+
+1. **Custom Events**: Dispatch events for lifecycle hooks
+
+```javascript
+window.dispatchEvent(
+  new CustomEvent("loadBasicsReady", {
+    detail: { timestamp: Date.now() },
+  })
+);
+```
+
+2. **Global Namespaces**: Expose APIs under `window.Klef`
+
+```javascript
+window.Klef.DynamicIsland = {
+  Class: DynamicIsland,
+  init: initDynamicIsland,
+  showToast,
+  loadPreset,
+};
+```
+
+3. **Direct Function Calls**: For tightly coupled components
+
+## Best Practices
+
+1. **IIFE Wrapper**: Wrap component code in an Immediately Invoked Function Expression to avoid global scope pollution
+2. **Existence Checks**: Always verify DOM elements exist before manipulating them
+3. **Console Logging**: Include descriptive console messages with component name prefix
+4. **Error Handling**: Use try-catch blocks for error-prone operations
+5. **Cleanup**: Remove event listeners and clear timers in `disconnectedCallback()` for Web Components
+6. **Responsive Design**: Check viewport width and adjust behavior accordingly
+7. **Accessibility**: Include ARIA labels and keyboard navigation support
+
+## Related Files
+
+- Load Basics: `shared/components/load-basics/load-basics.js`
+- Mega Menu: `shared/components/mega-menu/mega-menu.js`
+- Dynamic Island: `shared/components/dynamic-island/dynamic-island.js`
+- Portfolio Grid: `shared/components/index-portfolio/portfolio-grid.js`

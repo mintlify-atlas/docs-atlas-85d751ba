@@ -1,0 +1,555 @@
+---
+title: Design System
+description: Variable-driven CSS architecture inspired by Apple's design language
+---
+
+The Klef Design System V2 is a **variable-driven CSS architecture** that uses CSS custom properties for declarative styling, inspired by Apple's design language.
+
+## Philosophy
+
+<Info>
+  **"Classes define intention. Variables define behavior."**
+  
+  The design system separates semantic meaning (classes) from styling behavior (CSS variables), enabling highly composable and maintainable interfaces.
+</Info>
+
+## Design Tokens
+
+All design values are defined as CSS custom properties in `assets/styles/design-system.css`:
+
+### Color System
+
+<CodeGroup>
+```css Primary Colors
+:root {
+  /* Core Colors */
+  --k-black: #22323a;
+  
+  /* Primary Colors */
+  --blue: #0071e3;         /* AA contrast on white */
+  --blue-hover: #0077ed;
+  --blue-rgb: 0, 113, 227;
+  --blue-hsl: 211 100% 45%;
+  --blue-light: rgba(0, 113, 227, 0.1);
+  
+  --orange: #e68600;
+  --orange-hover: #d97f00;
+  --orange-rgb: 230, 134, 0;
+  --orange-hsl: 38 100% 45%;
+  --orange-light: rgba(230, 134, 0, 0.12);
+}
+```
+
+```css Secondary Colors
+:root {
+  /* Klef Dev Identity Colors */
+  --green: #1e6f36;
+  --green-hover: #195f2e;
+  --green-light: rgba(30, 111, 54, 0.12);
+  
+  --pink: #c91042;
+  --pink-hover: #b80e3c;
+  --pink-light: rgba(201, 16, 66, 0.1);
+  
+  --purple: #8b3fc7;
+  --purple-hover: #7d38b3;
+  --purple-light: rgba(139, 63, 199, 0.1);
+  
+  --red: #d12d20;
+  --red-hover: #bc281c;
+  --red-light: rgba(209, 45, 32, 0.1);
+}
+```
+
+```css Gray Scale
+:root {
+  --gray-100: #f5f6f7;
+  --gray-200: #e5e7ea;
+  --gray-300: #cfd4d8;
+  --gray-400: #b0b5ba;
+  --gray-500: #8e8e93;
+  --gray-600: #6e6e73;
+  --gray-700: #424245;
+  --gray-800: #22323a;
+  --gray-900: #1d1d1f;
+  
+  --white: #ffffff;
+  --black: #000000;
+}
+```
+
+```css Semantic Colors
+:root {
+  /* Semantic color tokens */
+  --text-primary: var(--k-black);
+  --text-secondary: var(--gray-600);
+  --text-tertiary: var(--gray-500);
+  --text-inverse: var(--white);
+  
+  --bg-primary: var(--white);
+  --bg-secondary: var(--gray-100);
+  --bg-tertiary: var(--gray-200);
+  
+  --border-light: rgba(0, 0, 0, 0.06);
+  --border-medium: rgba(0, 0, 0, 0.1);
+  --border-strong: rgba(0, 0, 0, 0.2);
+}
+```
+</CodeGroup>
+
+### Typography
+
+The system uses the **SF Pro** font stack with a base size of 17px:
+
+```css
+:root {
+  --font-system: -apple-system, BlinkMacSystemFont, "SF Pro Display", 
+                 "Segoe UI", Roboto, sans-serif;
+  --font-mono: "SF Mono", Monaco, "Cascadia Code", "Courier New", monospace;
+  
+  /* Font Sizes (Base: 17px) */
+  --fs-xs: 0.7647rem;    /* 13px */
+  --fs-sm: 0.8235rem;    /* 14px */
+  --fs-base: 1rem;       /* 17px */
+  --fs-md: 1.0588rem;    /* 18px */
+  --fs-lg: 1.1765rem;    /* 20px */
+  --fs-xl: 1.4118rem;    /* 24px */
+  --fs-2xl: 1.6471rem;   /* 28px */
+  --fs-3xl: 1.8824rem;   /* 32px */
+  --fs-4xl: 2.3529rem;   /* 40px */
+  --fs-5xl: 2.8235rem;   /* 48px */
+  --fs-6xl: 3.2941rem;   /* 56px */
+  --fs-7xl: 3.7647rem;   /* 64px */
+  --fs-8xl: 4.7059rem;   /* 80px */
+  
+  /* Font Weights */
+  --fw-regular: 400;
+  --fw-medium: 500;
+  --fw-semibold: 600;
+  --fw-bold: 700;
+  
+  /* Line Heights */
+  --lh-tight: 1.05;
+  --lh-snug: 1.2;
+  --lh-normal: 1.47059;
+  --lh-relaxed: 1.6;
+  --lh-loose: 1.8;
+  
+  /* Letter Spacing */
+  --ls-tighter: -0.022em;
+  --ls-tight: -0.015em;
+  --ls-normal: 0;
+  --ls-wide: 0.01em;
+  --ls-wider: 0.08em;
+}
+```
+
+### Spacing Scale
+
+8-point grid system with rem units:
+
+```css
+:root {
+  --sp-0: 0;
+  --sp-1: 0.25rem;   /* 4px */
+  --sp-2: 0.5rem;    /* 8px */
+  --sp-3: 0.75rem;   /* 12px */
+  --sp-4: 1rem;      /* 16px */
+  --sp-5: 1.5rem;    /* 24px */
+  --sp-6: 2rem;      /* 32px */
+  --sp-7: 3rem;      /* 48px */
+  --sp-8: 4rem;      /* 64px */
+  --sp-9: 6rem;      /* 96px */
+  --sp-10: 8rem;     /* 128px */
+}
+```
+
+### Border Radius & Shadows
+
+```css
+:root {
+  /* Border Radius (Apple standard) */
+  --radius-xs: 4px;
+  --radius-sm: 16px;
+  --radius-md: 18px;
+  --radius-lg: 20px;
+  --radius-xl: 24px;
+  --radius-2xl: 32px;
+  --radius-full: 9999px;
+  
+  /* Shadows */
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.04), 0 2px 4px rgba(0, 0, 0, 0.02);
+  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.05), 0 4px 6px rgba(0, 0, 0, 0.02);
+  --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.06), 0 10px 10px rgba(0, 0, 0, 0.02);
+  --shadow-2xl: 0 25px 50px rgba(0, 0, 0, 0.12);
+  --shadow-soft: 0 10px 30px rgba(0, 0, 0, 0.06);
+}
+```
+
+### Animation & Timing
+
+```css
+:root {
+  /* Easing Functions */
+  --ease-in-out: cubic-bezier(0.42, 0, 0.58, 1);
+  --ease-out: ease-out;
+  --ease-in: cubic-bezier(0.4, 0, 1, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  
+  /* Durations */
+  --duration-fast: 0.15s;
+  --duration-base: 0.2s;
+  --duration-slow: 0.3s;
+  --duration-slower: 0.5s;
+}
+```
+
+## Variable Engine
+
+The design system's most powerful feature is the **Variable Engine** - CSS that reads inline style variables:
+
+<Tabs>
+  <Tab title="Concept">
+    Instead of writing utility classes like `.flex .items-center .gap-4`, you write inline CSS variables:
+    
+    ```html
+    <!-- Traditional approach -->
+    <div class="flex items-center justify-between p-5 bg-gray-100 rounded-lg">
+    
+    <!-- Variable-driven approach -->
+    <div style="--flex; --items:center; --justify:space-between; --p:var(--sp-5); --bg:var(--bg-secondary); --br:var(--radius-lg)">
+    ```
+  </Tab>
+  
+  <Tab title="Implementation">
+    The CSS uses attribute selectors to detect variables and apply styles:
+    
+    ```css
+    /* Flexbox */
+    [style*="--flex"] {
+      display: flex;
+    }
+    
+    [style*="--items:"] {
+      align-items: var(--items);
+    }
+    
+    [style*="--justify:"] {
+      justify-content: var(--justify);
+    }
+    
+    /* Spacing */
+    [style*="--p:"] {
+      padding: var(--p);
+    }
+    
+    [style*="--gap:"] {
+      gap: var(--gap);
+    }
+    ```
+  </Tab>
+  
+  <Tab title="Benefits">
+    <CardGroup cols={2}>
+      <Card title="Type Safety" icon="check">
+        Values come from design tokens, ensuring consistency
+      </Card>
+      <Card title="No Class Bloat" icon="broom">
+        HTML stays clean and semantic
+      </Card>
+      <Card title="Composability" icon="layer-group">
+        Variables combine freely without conflicts
+      </Card>
+      <Card title="Inspectability" icon="magnifying-glass">
+        DevTools show actual CSS values
+      </Card>
+    </CardGroup>
+  </Tab>
+</Tabs>
+
+## Available Variable Categories
+
+The Variable Engine supports comprehensive styling:
+
+### Layout & Positioning
+
+```html
+<div style="--pos:absolute; --top:0; --left:0; --z:var(--z-modal)">
+<div style="--d:grid; --cols:repeat(3, 1fr); --gap:var(--sp-5)">
+```
+
+### Sizing
+
+```html
+<div style="--w:100%; --h:400px; --max-w:1200px">
+<div style="--w-fill; --h-fill">  <!-- Fills available space -->
+```
+
+### Spacing
+
+```html
+<div style="--p:var(--sp-5); --mx:auto">
+<div style="--py:var(--sp-8); --px:var(--sp-4)">
+```
+
+### Colors & Effects
+
+```html
+<div style="--bg:var(--blue); --c:var(--white)">
+<div style="--shadow:var(--shadow-lg); --blur:20px">
+```
+
+### Typography
+
+```html
+<h1 style="--fs:var(--fs-4xl); --fw:var(--fw-bold); --lh:var(--lh-tight)">
+<p style="--ta:center; --ls:var(--ls-tight)">
+```
+
+## Component Classes
+
+While the Variable Engine handles behavior, **semantic component classes** define intention:
+
+### Buttons
+
+```css
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+  padding: 12px 22px;
+  font-family: inherit;
+  font-size: var(--fs-lg);
+  font-weight: var(--fw-regular);
+  line-height: 1.17648;
+  letter-spacing: var(--ls-tighter);
+  border: none;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--duration-base) var(--ease-out);
+}
+
+.btn-primary {
+  background: var(--blue);
+  color: var(--white);
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: var(--blue-hover);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+```
+
+<CodeGroup>
+```html Primary Button
+<button class="btn btn-primary">Get Started</button>
+```
+
+```html Secondary Button
+<button class="btn btn-secondary">Learn More</button>
+```
+
+```html Large Button
+<button class="btn btn-primary btn-lg">Continue</button>
+```
+</CodeGroup>
+
+### Cards
+
+```css
+.card {
+  background: var(--bg-primary);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  border: 1px solid var(--border-light);
+  transition: all var(--duration-slow) var(--ease-out);
+}
+
+.card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-xl);
+  border-color: var(--border-medium);
+}
+```
+
+### Badges
+
+```css
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  padding: 4px 10px;
+  border-radius: var(--radius-md);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+  line-height: 1;
+}
+
+.badge-blue {
+  background: var(--blue-light);
+  color: var(--blue);
+}
+```
+
+## Real-World Examples
+
+<Tabs>
+  <Tab title="Hero Section">
+    ```html
+    <section style="--py:var(--sp-10); --ta:center">
+      <div class="container">
+        <span style="--d:inline-flex; --items:center; --gap:var(--sp-2); --bg:var(--blue-light); --c:var(--blue); --py:var(--sp-2); --px:var(--sp-4); --br:var(--radius-full); --fs:var(--fs-sm); --fw:var(--fw-medium)">
+          New Feature
+        </span>
+        
+        <h1 class="display-xl" style="--mt:var(--sp-5); --mb:var(--sp-4)">
+          Build Better Interfaces
+        </h1>
+        
+        <p class="body-lg" style="--c:var(--text-secondary); --max-w:600px; --mx:auto; --mb:var(--sp-6)">
+          A modern, variable-driven CSS system inspired by Apple's design language.
+        </p>
+        
+        <div style="--flex; --gap:var(--sp-3); --justify:center">
+          <button class="btn btn-primary">Get Started</button>
+          <button class="btn btn-secondary">Learn More</button>
+        </div>
+      </div>
+    </section>
+    ```
+  </Tab>
+  
+  <Tab title="Grid Layout">
+    ```html
+    <div style="--grid; --cols:repeat(3, 1fr); --gap:var(--sp-5)">
+      <div class="card" style="--p:var(--sp-5)">
+        <h3 style="--fs:var(--fs-xl); --fw:var(--fw-semibold); --mb:var(--sp-2)">
+          Feature One
+        </h3>
+        <p style="--c:var(--text-secondary)">
+          Description of the first feature
+        </p>
+      </div>
+      
+      <div class="card" style="--p:var(--sp-5)">
+        <h3 style="--fs:var(--fs-xl); --fw:var(--fw-semibold); --mb:var(--sp-2)">
+          Feature Two
+        </h3>
+        <p style="--c:var(--text-secondary)">
+          Description of the second feature
+        </p>
+      </div>
+      
+      <div class="card" style="--p:var(--sp-5)">
+        <h3 style="--fs:var(--fs-xl); --fw:var(--fw-semibold); --mb:var(--sp-2)">
+          Feature Three
+        </h3>
+        <p style="--c:var(--text-secondary)">
+          Description of the third feature
+        </p>
+      </div>
+    </div>
+    ```
+  </Tab>
+  
+  <Tab title="Feature Card">
+    ```html
+    <div class="card" style="--p:var(--sp-6); --bg:linear-gradient(135deg, var(--blue), var(--purple)); --br:var(--radius-xl); --shadow:var(--shadow-xl); --c:var(--white)">
+      <div style="--flex; --items:center; --gap:var(--sp-3); --mb:var(--sp-4)">
+        <div style="--w:48px; --h:48px; --bg:rgba(255,255,255,0.2); --br:var(--radius-md); --flex; --items:center; --justify:center">
+          🚀
+        </div>
+        <h3 style="--fs:var(--fs-xl); --fw:var(--fw-semibold)">
+          Fast Performance
+        </h3>
+      </div>
+      <p style="--opacity:0.9; --lh:var(--lh-relaxed)">
+        Lightning-fast rendering with optimized CSS variables.
+      </p>
+    </div>
+    ```
+  </Tab>
+</Tabs>
+
+## Theming Support
+
+The design system is built for theming:
+
+```css
+/* Light mode (default) */
+:root {
+  --text-primary: var(--k-black);
+  --bg-primary: var(--white);
+}
+
+/* Dark mode (optional) */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --text-primary: #f5f5f7;
+    --text-secondary: #86868b;
+    --bg-primary: #000000;
+    --bg-secondary: #1d1d1f;
+    --border-light: rgba(255, 255, 255, 0.1);
+  }
+}
+```
+
+## Accessibility Features
+
+<AccordionGroup>
+  <Accordion title="Focus Visible">
+    All interactive elements have consistent focus styles:
+    ```css
+    *:focus-visible {
+      outline: 2px solid var(--blue);
+      outline-offset: 2px;
+    }
+    ```
+  </Accordion>
+  
+  <Accordion title="Reduced Motion">
+    Respects user's motion preferences:
+    ```css
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+      }
+    }
+    ```
+  </Accordion>
+  
+  <Accordion title="High Contrast">
+    Adjusts for high contrast mode:
+    ```css
+    @media (prefers-contrast: high) {
+      :root {
+        --border-light: rgba(0, 0, 0, 0.3);
+        --border-medium: rgba(0, 0, 0, 0.5);
+      }
+      
+      .btn, .card, .form-input {
+        border-width: 2px;
+      }
+    }
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Components" href="/architecture/components" icon="puzzle-piece">
+    Learn how components use the design system
+  </Card>
+  <Card title="Overview" href="/architecture/overview" icon="book">
+    Return to architecture overview
+  </Card>
+</CardGroup>

@@ -1,0 +1,543 @@
+---
+title: 'Deployment Guide'
+description: 'Deploy the Klef Sonatta website to production environments'
+icon: 'rocket'
+---
+
+## Overview
+
+As a static website with no build process, the Klef Sonatta website can be deployed to virtually any static hosting platform. This guide covers deployment options, optimization strategies, and best practices.
+
+## GitHub Pages Deployment
+
+The project includes automated GitHub Pages deployment configured in `.github/workflows/static.yml`.
+
+### Automatic Deployment
+
+The site automatically deploys to GitHub Pages on every push to the `main` branch:
+
+```yaml
+on:
+  push:
+    branches: ["main"]
+  workflow_dispatch:
+```
+
+### Setup Steps
+
+<Steps>
+  <Step title="Enable GitHub Pages">
+    1. Go to your repository on GitHub
+    2. Navigate to Settings > Pages
+    3. Under "Source", select "GitHub Actions"
+  </Step>
+
+  <Step title="Configure Repository">
+    Ensure the workflow file `.github/workflows/static.yml` is present in your repository (it should be by default).
+  </Step>
+
+  <Step title="Push to Main">
+    Any push to the `main` branch will trigger automatic deployment:
+    ```bash
+    git add .
+    git commit -m "Update site"
+    git push origin main
+    ```
+  </Step>
+
+  <Step title="Access Your Site">
+    Your site will be available at:
+    ```
+    https://[your-username].github.io/klef-sonatta-website/
+    ```
+  </Step>
+</Steps>
+
+### Workflow Configuration
+
+The deployment workflow:
+
+```yaml
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: '.'
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+```
+
+<Info>
+The workflow uploads the entire repository as is - no build step needed!
+</Info>
+
+### Custom Domain (Optional)
+
+1. Add a `CNAME` file to the repository root:
+   ```
+   www.yourdomain.com
+   ```
+
+2. Configure DNS records:
+   - **CNAME Record**: Point `www` to `[username].github.io`
+   - **A Records**: Point apex domain to GitHub's IPs:
+     ```
+     185.199.108.153
+     185.199.109.153
+     185.199.110.153
+     185.199.111.153
+     ```
+
+3. Enable HTTPS in GitHub Pages settings
+
+## Static Hosting Platforms
+
+The site works with all major static hosting providers:
+
+### Netlify
+
+<Steps>
+  <Step title="Connect Repository">
+    1. Sign up at [netlify.com](https://netlify.com)
+    2. Click "New site from Git"
+    3. Connect your GitHub repository
+  </Step>
+
+  <Step title="Configure Build Settings">
+    **Build command**: Leave empty (no build needed)
+    **Publish directory**: `.` (root directory)
+  </Step>
+
+  <Step title="Deploy">
+    Click "Deploy site" - done!
+  </Step>
+</Steps>
+
+**Netlify configuration** (`netlify.toml`):
+
+```toml
+[build]
+  publish = "."
+  command = "echo 'No build required'"
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-XSS-Protection = "1; mode=block"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+```
+
+### Vercel
+
+<Steps>
+  <Step title="Import Project">
+    1. Visit [vercel.com](https://vercel.com)
+    2. Click "New Project"
+    3. Import your Git repository
+  </Step>
+
+  <Step title="Configure">
+    - **Framework Preset**: Other
+    - **Build Command**: (leave empty)
+    - **Output Directory**: `.`
+  </Step>
+
+  <Step title="Deploy">
+    Click "Deploy" and your site goes live
+  </Step>
+</Steps>
+
+### Cloudflare Pages
+
+```bash
+# Install Wrangler CLI
+npm install -g wrangler
+
+# Login to Cloudflare
+wrangler login
+
+# Deploy
+wrangler pages publish . --project-name=klef-sonatta
+```
+
+Or use the Cloudflare dashboard to connect your Git repository.
+
+### AWS S3 + CloudFront
+
+For AWS deployment:
+
+```bash
+# Sync to S3 bucket
+aws s3 sync . s3://your-bucket-name \
+  --exclude ".git/*" \
+  --exclude ".github/*" \
+  --exclude "docs/*" \
+  --cache-control "public, max-age=31536000" \
+  --exclude "index.html"
+
+# Upload HTML with different cache settings
+aws s3 sync . s3://your-bucket-name \
+  --exclude "*" \
+  --include "*.html" \
+  --cache-control "public, max-age=3600"
+```
+
+Then configure CloudFront for CDN distribution.
+
+## Performance Optimization
+
+The site is already highly optimized, but here are additional production enhancements:
+
+### Image Optimization
+
+<AccordionGroup>
+  <Accordion title="WebP and AVIF Formats">
+    The site supports modern image formats:
+    ```html
+    <picture>
+      <source srcset="image.avif" type="image/avif">
+      <source srcset="image.webp" type="image/webp">
+      <img src="image.jpg" alt="Fallback">
+    </picture>
+    ```
+  </Accordion>
+
+  <Accordion title="Progressive Loading">
+    Portfolio images use IntersectionObserver for lazy loading:
+    - Images load 100px before entering viewport
+    - Skeleton screens provide visual feedback
+    - Reduces initial page weight significantly
+  </Accordion>
+
+  <Accordion title="Image Compression">
+    Optimize images before deployment:
+    ```bash
+    # Using ImageMagick
+    mogrify -quality 85 -sampling-factor 4:2:0 -strip assets/images/*.jpg
+    
+    # Using cwebp for WebP
+    cwebp -q 80 input.jpg -o output.webp
+    ```
+  </Accordion>
+</AccordionGroup>
+
+### CSS Optimization
+
+```css
+/* Critical CSS is inlined */
+/* Non-critical CSS loaded asynchronously */
+<link rel="preload" href="assets/styles/design-system.css" as="style">
+<link rel="stylesheet" href="assets/styles/design-system.css" media="print" onload="this.media='all'">
+```
+
+### JavaScript Optimization
+
+The site uses:
+- **Vanilla JavaScript (ES6+)**: No framework overhead
+- **Module loading**: Scripts load async/defer
+- **Minimal dependencies**: Only native APIs (IntersectionObserver, Fetch)
+
+```html
+<script src="assets/scripts/mega-menu-spa.js" defer></script>
+```
+
+### Resource Hints
+
+Add these to `<head>` for better performance:
+
+```html
+<!-- DNS Prefetch for external resources -->
+<link rel="dns-prefetch" href="//fonts.googleapis.com">
+
+<!-- Preconnect to critical origins -->
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+<!-- Preload critical assets -->
+<link rel="preload" href="assets/fonts/inter.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="assets/styles/design-system.css" as="style">
+```
+
+## SEO Optimization
+
+### Meta Tags
+
+Ensure proper meta tags are present:
+
+```html
+<!-- Primary Meta Tags -->
+<title>Klef Agency - Branding, Strategy & Development</title>
+<meta name="title" content="Klef Agency - Branding, Strategy & Development">
+<meta name="description" content="Award-winning agency specializing in branding, digital strategy, and web development in Cabo San Lucas, Mexico.">
+
+<!-- Open Graph / Facebook -->
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://klef.agency/">
+<meta property="og:title" content="Klef Agency">
+<meta property="og:description" content="Award-winning agency specializing in branding, digital strategy, and web development.">
+<meta property="og:image" content="https://klef.agency/assets/images/og-image.jpg">
+
+<!-- Twitter -->
+<meta property="twitter:card" content="summary_large_image">
+<meta property="twitter:url" content="https://klef.agency/">
+<meta property="twitter:title" content="Klef Agency">
+<meta property="twitter:description" content="Award-winning agency specializing in branding, digital strategy, and web development.">
+<meta property="twitter:image" content="https://klef.agency/assets/images/twitter-image.jpg">
+```
+
+### Structured Data (Schema.org)
+
+Add JSON-LD for better search results:
+
+```html
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  "name": "Klef Agency",
+  "url": "https://klef.agency",
+  "logo": "https://klef.agency/assets/images/logo.png",
+  "description": "Award-winning agency specializing in branding, digital strategy, and web development",
+  "address": {
+    "@type": "PostalAddress",
+    "addressLocality": "Cabo San Lucas",
+    "addressCountry": "MX"
+  },
+  "contactPoint": {
+    "@type": "ContactPoint",
+    "email": "hello@klef.agency",
+    "contactType": "Customer Service"
+  }
+}
+</script>
+```
+
+### Sitemap
+
+Create `sitemap.xml` in the root:
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://klef.agency/</loc>
+    <lastmod>2026-03-04</lastmod>
+    <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>https://klef.agency/portfolio/casa-valentina-los-cabos-restaurant-brand/</loc>
+    <lastmod>2026-03-04</lastmod>
+    <priority>0.8</priority>
+  </url>
+  <!-- Add more portfolio items -->
+</urlset>
+```
+
+### Robots.txt
+
+Create `robots.txt` in the root:
+
+```
+User-agent: *
+Allow: /
+
+Sitemap: https://klef.agency/sitemap.xml
+```
+
+## Performance Monitoring
+
+### Lighthouse Scores
+
+Target metrics:
+- **Performance**: 95+
+- **Accessibility**: 95+
+- **Best Practices**: 95+
+- **SEO**: 95+
+
+```bash
+# Run Lighthouse audit
+lighthouse https://your-site.com --view
+```
+
+### Core Web Vitals
+
+Optimize for:
+
+<CardGroup cols={3}>
+  <Card title="LCP" icon="gauge-high">
+    **Largest Contentful Paint**
+    Target: < 2.5s
+    
+    Optimizations:
+    - Preload hero images
+    - Optimize image sizes
+    - Use CDN
+  </Card>
+  
+  <Card title="FID" icon="hand-pointer">
+    **First Input Delay**
+    Target: < 100ms
+    
+    Optimizations:
+    - Minimal JavaScript
+    - Defer non-critical JS
+    - Use passive event listeners
+  </Card>
+  
+  <Card title="CLS" icon="arrows-maximize">
+    **Cumulative Layout Shift**
+    Target: < 0.1
+    
+    Optimizations:
+    - Reserve image space
+    - Use skeleton screens
+    - Avoid dynamic content injection
+  </Card>
+</CardGroup>
+
+## Security Headers
+
+Configure security headers in your hosting platform:
+
+```
+Strict-Transport-Security: max-age=31536000; includeSubDomains
+X-Content-Type-Options: nosniff
+X-Frame-Options: DENY
+X-XSS-Protection: 1; mode=block
+Referrer-Policy: strict-origin-when-cross-origin
+Permissions-Policy: geolocation=(), microphone=(), camera=()
+```
+
+## Pre-Deployment Checklist
+
+<Steps>
+  <Step title="Test Locally">
+    - ✅ All pages load correctly
+    - ✅ Navigation works on desktop and mobile
+    - ✅ Search functionality works
+    - ✅ Images load progressively
+    - ✅ Forms submit properly
+  </Step>
+
+  <Step title="Run Performance Audits">
+    - ✅ Lighthouse score > 95 in all categories
+    - ✅ Core Web Vitals meet targets
+    - ✅ Images are optimized
+    - ✅ Assets are minified
+  </Step>
+
+  <Step title="SEO Verification">
+    - ✅ Meta tags present
+    - ✅ Sitemap.xml created
+    - ✅ Robots.txt configured
+    - ✅ Structured data added
+    - ✅ Social media cards working
+  </Step>
+
+  <Step title="Security Check">
+    - ✅ HTTPS enabled
+    - ✅ Security headers configured
+    - ✅ No sensitive data exposed
+    - ✅ Dependencies up to date
+  </Step>
+
+  <Step title="Cross-Browser Testing">
+    - ✅ Chrome/Edge
+    - ✅ Firefox
+    - ✅ Safari
+    - ✅ Mobile browsers
+  </Step>
+</Steps>
+
+## Continuous Deployment
+
+For automated deployments:
+
+1. **Main branch** = production
+2. **Development branch** = staging
+3. Pull requests trigger preview deployments
+4. Merging to main triggers production deployment
+
+```bash
+# Development workflow
+git checkout -b feature/new-portfolio-item
+# Make changes
+git commit -m "Add new portfolio item"
+git push origin feature/new-portfolio-item
+# Create PR → Preview deployment generated
+# After review → Merge to main → Production deployment
+```
+
+## Rollback Strategy
+
+If you need to rollback a deployment:
+
+### GitHub Pages
+```bash
+# Revert to previous commit
+git revert HEAD
+git push origin main
+```
+
+### Netlify/Vercel
+Use the dashboard to rollback to previous deployment with one click.
+
+## Monitoring & Analytics
+
+### Google Analytics
+
+Add to `<head>`:
+
+```html
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-XXXXXXXXXX');
+</script>
+```
+
+### Custom Event Tracking
+
+The site dispatches custom events for tracking:
+
+```javascript
+// Portfolio image loaded event
+document.addEventListener('image-loaded', (e) => {
+  console.log('Image loaded:', e.detail.index);
+  // Send to analytics
+  gtag('event', 'image_loaded', {
+    'image_index': e.detail.index
+  });
+});
+```
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Local Setup" icon="laptop-code" href="/development/local-setup">
+    Learn how to set up local development
+  </Card>
+  <Card title="Components" icon="gauge-high" href="/components/mega-menu">
+    Explore the component architecture
+  </Card>
+</CardGroup>

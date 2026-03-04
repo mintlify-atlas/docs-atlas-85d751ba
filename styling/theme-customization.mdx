@@ -1,0 +1,406 @@
+---
+title: Theme Customization
+description: Customize the Klef Design System to match your brand
+---
+
+The Klef Design System is built with customization in mind. By modifying CSS variables, you can completely transform the look and feel of your application while maintaining the design system's structure.
+
+## Understanding the Variable System
+
+Klef uses a unique **variable-driven architecture** that combines CSS custom properties with attribute selectors to create a declarative styling system.
+
+### The Core Principle
+
+> "Classes define intention. Variables define behavior."
+
+This means:
+- **Semantic classes** (`.btn`, `.card`, `.nav`) define what a component is
+- **CSS variables** (inline or in `:root`) define how it looks and behaves
+
+## Customizing Design Tokens
+
+### Override Root Variables
+
+The simplest way to customize the theme is to override CSS variables in your own stylesheet:
+
+```css
+:root {
+  /* Override primary colors */
+  --blue: #0066CC;
+  --blue-hover: #0052A3;
+  --blue-light: rgba(0, 102, 204, 0.1);
+
+  /* Override brand colors */
+  --k-blue: #0066CC;
+  --k-purple: #6E6EFF;
+
+  /* Override spacing */
+  --sp-5: 2rem;
+  --sp-6: 3rem;
+
+  /* Override typography */
+  --font-system: 'Inter', -apple-system, sans-serif;
+  --fs-base: 1.125rem; /* 18px instead of 17px */
+
+  /* Override border radius */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+}
+```
+
+### Custom Color Palette
+
+Create your own brand color system:
+
+```css
+:root {
+  /* Brand colors */
+  --brand-primary: #FF6B35;
+  --brand-primary-hover: #E55A2B;
+  --brand-primary-light: rgba(255, 107, 53, 0.1);
+
+  --brand-secondary: #004E89;
+  --brand-secondary-hover: #003D6D;
+  --brand-secondary-light: rgba(0, 78, 137, 0.1);
+
+  /* Apply to existing semantic tokens */
+  --blue: var(--brand-primary);
+  --blue-hover: var(--brand-primary-hover);
+  --blue-light: var(--brand-primary-light);
+
+  --green: var(--brand-secondary);
+  --green-hover: var(--brand-secondary-hover);
+  --green-light: var(--brand-secondary-light);
+}
+```
+
+## Dark Mode Implementation
+
+The design system includes commented dark mode support that you can enable:
+
+```css
+@media (prefers-color-scheme: dark) {
+  :root {
+    --k-black: #ffffff;
+    --text-primary: #f5f5f7;
+    --text-secondary: #86868b;
+    --text-tertiary: #6e6e73;
+    
+    --bg-primary: #000000;
+    --bg-secondary: #1d1d1f;
+    --bg-tertiary: #2d2d2f;
+    
+    --border-light: rgba(255, 255, 255, 0.1);
+    --border-medium: rgba(255, 255, 255, 0.2);
+    --border-strong: rgba(255, 255, 255, 0.3);
+    
+    --gray-100: #1d1d1f;
+    --gray-200: #2d2d2f;
+  }
+  
+  .nav {
+    background: rgba(0, 0, 0, 0.8);
+  }
+}
+```
+
+### Manual Dark Mode Toggle
+
+Implement a manual dark mode toggle:
+
+```css
+[data-theme="dark"] {
+  --k-black: #ffffff;
+  --text-primary: #f5f5f7;
+  --text-secondary: #86868b;
+  --bg-primary: #000000;
+  --bg-secondary: #1d1d1f;
+  --bg-tertiary: #2d2d2f;
+  --border-light: rgba(255, 255, 255, 0.1);
+  --border-medium: rgba(255, 255, 255, 0.2);
+}
+```
+
+```html
+<html data-theme="dark">
+  <!-- Your content -->
+</html>
+```
+
+```javascript
+// Toggle dark mode
+function toggleDarkMode() {
+  const html = document.documentElement;
+  const currentTheme = html.getAttribute('data-theme');
+  html.setAttribute('data-theme', currentTheme === 'dark' ? 'light' : 'dark');
+}
+```
+
+## Using the Variable-Driven System
+
+### Inline Variable Styling
+
+The Klef v2+ system allows you to use variables directly in HTML:
+
+```html
+<!-- Traditional CSS classes -->
+<div class="flex items-center justify-between p-5 bg-gray-100 rounded-lg">
+  Content
+</div>
+
+<!-- Klef variable-driven approach -->
+<div style="--flex; --items:center; --justify:space-between; --p:var(--sp-5); --bg:var(--bg-secondary); --br:var(--radius-lg)">
+  Content
+</div>
+```
+
+### Available Variable Shortcuts (v3)
+
+Klef v3 introduces ergonomic short tokens:
+
+```css
+/* Layout */
+--d      /* display */
+--pos    /* position */
+--zi     /* z-index */
+
+/* Size */
+--w      /* width */
+--h      /* height */
+--wh     /* width & height */
+--mw     /* max-width */
+--mh     /* max-height */
+
+/* Spacing */
+--p      /* padding */
+--px     /* padding-inline */
+--py     /* padding-block */
+--m      /* margin */
+--mx     /* margin-inline */
+--my     /* margin-block */
+--g      /* gap */
+
+/* Visual */
+--bg     /* background */
+--c      /* color */
+--bd     /* border */
+--rad    /* border-radius */
+--sh     /* box-shadow */
+--op     /* opacity */
+
+/* Typography */
+--fs     /* font-size */
+--fw     /* font-weight */
+--lh     /* line-height */
+--ls     /* letter-spacing */
+--ta     /* text-align */
+
+/* Motion */
+--trs    /* transform */
+--trn    /* transition */
+
+/* Flexbox */
+--fd     /* flex-direction */
+--ai     /* align-items */
+--jc     /* justify-content */
+
+/* Grid */
+--gtc    /* grid-template-columns */
+--gtr    /* grid-template-rows */
+--ga     /* grid-area */
+```
+
+### Flag Variables
+
+Simple boolean-like flags for common patterns:
+
+```html
+<!-- Display modes -->
+<div style="--flex">Flex container</div>
+<div style="--grid">Grid container</div>
+<div style="--center">Centered content</div>
+<div style="--hidden">Hidden element</div>
+```
+
+## Custom Component Themes
+
+### Customizing Buttons
+
+```css
+/* Create a custom button variant */
+.btn-brand {
+  background: linear-gradient(135deg, var(--brand-primary), var(--brand-secondary));
+  color: var(--white);
+  border: none;
+}
+
+.btn-brand:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+  filter: brightness(1.1);
+}
+```
+
+### Customizing Cards
+
+```css
+/* Glass morphism card */
+.card-glass {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: var(--shadow-xl);
+}
+
+/* Gradient card */
+.card-gradient {
+  background: linear-gradient(135deg, var(--blue), var(--purple));
+  color: var(--white);
+  border: none;
+}
+```
+
+## Typography Customization
+
+### Custom Font Integration
+
+```css
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+:root {
+  --font-system: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-display: 'Inter', sans-serif;
+}
+
+.display-xl,
+.display-lg,
+.headline-xl {
+  font-family: var(--font-display);
+  font-weight: var(--fw-bold);
+}
+```
+
+### Custom Typography Scale
+
+```css
+:root {
+  /* Larger base for better readability */
+  --fs-base: 1.125rem; /* 18px */
+  --fs-lg: 1.25rem;    /* 20px */
+  --fs-xl: 1.5rem;     /* 24px */
+  --fs-2xl: 1.875rem;  /* 30px */
+  --fs-3xl: 2.25rem;   /* 36px */
+  --fs-4xl: 3rem;      /* 48px */
+}
+```
+
+## Animation Customization
+
+### Custom Easing Functions
+
+```css
+:root {
+  --ease-bounce: cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  --ease-smooth: cubic-bezier(0.4, 0.0, 0.2, 1);
+  --duration-instant: 0.1s;
+  --duration-quick: 0.2s;
+  --duration-normal: 0.4s;
+  --duration-slow: 0.6s;
+}
+
+.btn {
+  transition: all var(--duration-quick) var(--ease-smooth);
+}
+
+.modal {
+  transition: transform var(--duration-normal) var(--ease-bounce);
+}
+```
+
+### Custom Animations
+
+```css
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.animate-slide-right {
+  animation: slideInRight var(--duration-slow) var(--ease-expo) backwards;
+}
+```
+
+## Complete Theme Example
+
+Here's a complete custom theme:
+
+```css
+/* Custom Brand Theme */
+:root {
+  /* Brand Colors */
+  --brand-primary: #FF6B35;
+  --brand-secondary: #004E89;
+  --brand-accent: #F7931E;
+  
+  /* Apply to system */
+  --blue: var(--brand-primary);
+  --green: var(--brand-secondary);
+  --orange: var(--brand-accent);
+  
+  /* Typography */
+  --font-system: 'Inter', -apple-system, sans-serif;
+  --fs-base: 1.125rem;
+  
+  /* Spacing - more generous */
+  --sp-5: 2rem;
+  --sp-6: 3rem;
+  --sp-7: 4rem;
+  
+  /* Softer shadows */
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.08);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.12);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.16);
+  
+  /* Rounded corners */
+  --radius-sm: 12px;
+  --radius-md: 16px;
+  --radius-lg: 24px;
+  
+  /* Smooth animations */
+  --ease-smooth: cubic-bezier(0.4, 0.0, 0.2, 1);
+  --duration-base: 0.3s;
+}
+
+/* Component customizations */
+.btn {
+  border-radius: var(--radius-md);
+  padding: 14px 28px;
+  font-weight: var(--fw-semibold);
+}
+
+.card {
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+}
+```
+
+## Best Practices
+
+1. **Start with tokens**: Always customize design tokens (colors, spacing, etc.) before individual components
+2. **Maintain consistency**: Use the existing variable system rather than hard-coded values
+3. **Test thoroughly**: Check your customizations across all breakpoints and themes
+4. **Document changes**: Keep track of which variables you've overridden
+5. **Use semantic variables**: Prefer `--text-primary` over direct color values for better theme switching
+
+## Next Steps
+
+- Explore [CSS Variables](/styling/css-variables) for a complete reference
+- Learn about [Responsive Design](/styling/responsive-design) to ensure your theme works on all devices
+- Check the component documentation for customization options

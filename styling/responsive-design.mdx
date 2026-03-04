@@ -1,0 +1,362 @@
+---
+title: Responsive Design
+description: Learn how to build responsive layouts with Klef's mobile-first approach
+---
+
+The Klef Design System follows a mobile-first responsive design approach, ensuring your applications look great on all devices.
+
+## Breakpoints
+
+The design system uses standard breakpoints for responsive layouts:
+
+- **Mobile**: Up to 480px
+- **Tablet**: 481px to 768px
+- **Desktop**: 769px to 1024px
+- **Large Desktop**: 1025px and above
+
+## Core Media Queries
+
+### Tablet and Below (max-width: 768px)
+
+At 768px and below, the design system adjusts spacing and typography:
+
+```css
+@media (max-width: 768px) {
+  :root {
+    --sp-5: 1rem;
+    --sp-6: 1.5rem;
+    --sp-7: 2rem;
+    --sp-8: 2.5rem;
+  }
+
+  .display-xl { font-size: var(--fs-6xl); }
+  .display-lg { font-size: var(--fs-5xl); }
+  .display-md { font-size: var(--fs-4xl); }
+  .headline-xl { font-size: var(--fs-4xl); }
+  .headline-lg { font-size: var(--fs-3xl); }
+
+  .container {
+    padding-inline: var(--sp-4);
+  }
+}
+```
+
+### Desktop Navigation (max-width: 1024px)
+
+```css
+@media (max-width: 1024px) {
+  .nav-links {
+    display: none;
+  }
+}
+```
+
+## Responsive Navigation
+
+The navigation system adapts from desktop to mobile:
+
+### Desktop Navigation
+
+On desktop, the navigation displays horizontally with hover effects:
+
+```css
+.navbar {
+  display: flex;
+  gap: 24px;
+  padding: 12px 32px;
+  background: white;
+  box-shadow: 0 0 60px 8px #00000024;
+  position: sticky;
+  top: 0;
+  z-index: 999;
+  justify-content: space-between;
+  align-items: center;
+}
+```
+
+### Mobile Navigation
+
+On mobile (max-width: 768px), the navigation transforms into a slide-out menu:
+
+```css
+@media (max-width: 768px) {
+  .mobile-topbar {
+    display: flex;
+  }
+
+  .navbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    flex-direction: column;
+    align-items: flex-start;
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+    overflow-y: auto;
+    padding: 80px 24px 24px;
+    z-index: 999;
+  }
+
+  .navbar.mobile-open {
+    transform: translateX(0);
+  }
+}
+```
+
+## Bento Grid System
+
+The Bento Grid is a modern, responsive grid layout system:
+
+### Desktop Layout
+
+```css
+.bento-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  grid-auto-rows: minmax(140px, auto);
+  gap: 1rem;
+}
+
+.bento-hero {
+  grid-column: span 2;
+  grid-row: span 2;
+}
+
+.bento-wide {
+  grid-column: span 2;
+  grid-row: span 1;
+}
+
+.bento-tall {
+  grid-column: span 1;
+  grid-row: span 2;
+}
+```
+
+### Tablet Layout (max-width: 768px)
+
+```css
+@media (max-width: 768px) {
+  .bento-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .bento-hero,
+  .bento-wide,
+  .bento-full {
+    grid-column: span 2;
+  }
+
+  .bento-tall {
+    grid-row: span 1;
+  }
+}
+```
+
+### Mobile Layout (max-width: 480px)
+
+```css
+@media (max-width: 480px) {
+  .bento-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .bento-hero,
+  .bento-wide,
+  .bento-tall,
+  .bento-square,
+  .bento-full {
+    grid-column: span 1;
+    grid-row: span 1;
+  }
+}
+```
+
+## Container Queries
+
+Klef v3 introduces container query support for component-level responsive design:
+
+```css
+.klef-container {
+  container-type: inline-size;
+}
+
+@container (min-width: 480px) {
+  [style*="--cols"] {
+    --cols: 2;
+  }
+}
+
+@container (min-width: 900px) {
+  [style*="--cols"] {
+    --cols: 3;
+  }
+}
+
+[style*="--cols"] {
+  display: grid;
+  grid-template-columns: repeat(var(--cols, 1), 1fr);
+}
+```
+
+### Usage Example
+
+```html
+<div class="klef-container">
+  <div style="--cols; --g:var(--sp-4)">
+    <div class="card">Item 1</div>
+    <div class="card">Item 2</div>
+    <div class="card">Item 3</div>
+  </div>
+</div>
+```
+
+## Responsive Component Patterns
+
+### Responsive Card Grid
+
+```html
+<div style="--grid; --cols:repeat(auto-fit, minmax(280px, 1fr)); --gap:var(--sp-5)">
+  <div class="card">Card 1</div>
+  <div class="card">Card 2</div>
+  <div class="card">Card 3</div>
+</div>
+```
+
+### Responsive Flex Layout
+
+```html
+<div style="--flex; --flex-wrap; --gap:var(--sp-4); --justify:space-between">
+  <div style="--flex-basis:300px; --flex-grow:1">Content 1</div>
+  <div style="--flex-basis:300px; --flex-grow:1">Content 2</div>
+</div>
+```
+
+### Responsive Mega Menu
+
+The mega menu adapts to mobile with a slide-in panel:
+
+```css
+@media (max-width: 768px) {
+  .mega-menus-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: white;
+    transform: translateX(100%);
+    transition: transform 0.3s ease;
+    overflow-y: auto;
+    z-index: 1001;
+    padding-top: 80px;
+  }
+
+  .mega-menus-container.show {
+    transform: translateX(0);
+  }
+
+  .mega-content {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+}
+```
+
+## Responsive Typography
+
+Typography classes automatically adjust on mobile:
+
+```html
+<h1 class="display-xl">
+  <!-- 80px on desktop, 56px on mobile -->
+  Large Display Text
+</h1>
+
+<h2 class="headline-lg">
+  <!-- 40px on desktop, 32px on mobile -->
+  Headline Text
+</h2>
+```
+
+## Accessibility Features
+
+### Reduced Motion
+
+```css
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+```
+
+### High Contrast Mode
+
+```css
+@media (prefers-contrast: high) {
+  :root {
+    --border-light: rgba(0, 0, 0, 0.3);
+    --border-medium: rgba(0, 0, 0, 0.5);
+  }
+
+  .btn,
+  .card,
+  .form-input {
+    border-width: 2px;
+  }
+}
+```
+
+## Best Practices
+
+1. **Mobile-First Approach**: Start with mobile styles and use `min-width` media queries to add complexity
+2. **Use Container Queries**: For component-level responsive behavior
+3. **Flexible Layouts**: Use CSS Grid with `auto-fit` and `minmax()` for truly responsive layouts
+4. **Touch-Friendly**: Ensure interactive elements are at least 44x44px on mobile
+5. **Test on Real Devices**: Always test on actual mobile devices, not just browser DevTools
+
+## Responsive Utilities
+
+```html
+<!-- Hide on mobile -->
+<div style="--d:none" class="desktop-only">
+  Desktop content
+</div>
+
+<!-- Stack on mobile, row on desktop -->
+<div style="--flex; --flex-col" class="desktop-row">
+  <div>Item 1</div>
+  <div>Item 2</div>
+</div>
+```
+
+## Print Styles
+
+The system includes optimized print styles:
+
+```css
+@media print {
+  .nav,
+  .btn,
+  .modal-overlay,
+  .dropdown {
+    display: none !important;
+  }
+
+  .card {
+    break-inside: avoid;
+  }
+
+  * {
+    box-shadow: none !important;
+  }
+}
+```

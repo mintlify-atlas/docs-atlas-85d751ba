@@ -1,0 +1,261 @@
+---
+title: Introduction to Klef Sonatta Website
+description: A modern, native web experience showcasing Klef Agency's portfolio with optimized performance and innovative design patterns
+---
+
+## What is Klef Sonatta Website?
+
+The Klef Sonatta Website is the official website for Klef Agency, built using the **Sonatta theme** — a native web development approach inspired by Klef's "Web Soberana" (Sovereign Web) philosophy and the klef-site-v3 design system. The site showcases Klef Agency's services in branding, strategy, studio (design), and development with a dynamic portfolio, interactive mega menu, and optimized performance.
+
+<Info>
+Sonatta represents a "musical composition" where each component (strategy, identity, technology) plays in harmony, creating a coherent and scalable experience.
+</Info>
+
+## Key Features
+
+### Core Functionality
+
+<CardGroup cols={2}>
+  <Card title="Static SPA Menu" icon="bars">
+    Single-page application with smooth navigation and mega menus for seamless browsing
+  </Card>
+  
+  <Card title="Dynamic Hero Section" icon="grid">
+    Masonry layout showcasing portfolio projects with depth effects and micro-interactions
+  </Card>
+  
+  <Card title="Interactive Portfolio" icon="folder">
+    Cards with project details, dynamic filtering, and adaptive sheet components
+  </Card>
+  
+  <Card title="Global Search" icon="search">
+    Real-time search with visual results across posts, pages, and portfolio items
+  </Card>
+</CardGroup>
+
+### Technical Excellence
+
+- **CSS Variable Design System**: Custom properties for consistent styling and easy customization
+- **Performance Optimized**: Lazy loading images, efficient CSS, minimal JavaScript
+- **Accessibility First**: Semantic HTML, keyboard navigation, screen reader support
+- **Modern Image Formats**: WebP, AVIF support with progressive enhancement
+- **Native Components**: Pure vanilla JavaScript without heavy framework dependencies
+
+## Technology Stack
+
+The project is built with a "native web" approach, avoiding heavy frameworks:
+
+```javascript
+// Example: Navigation system from navigation-system.js
+class NavigationSystem {
+  constructor() {
+    this.initScrollLock();
+    this.initMobileMenu();
+    this.initMegaMenu();
+  }
+}
+```
+
+**Frontend Technologies:**
+- HTML5 with semantic markup
+- CSS3 with Custom Properties (CSS Variables)
+- Vanilla JavaScript (ES6+)
+- Variable fonts: Inter and Google Sans
+- Custom SVG symbols and Font Awesome icons
+
+**Build & Hosting:**
+- Static site (no build process required)
+- Compatible with GitHub Pages and static hosting platforms
+- Optional development server for local testing
+
+<Tip>
+The site achieves **95+ Lighthouse scores** in performance, accessibility, and SEO without any build tools or bundlers.
+</Tip>
+
+## Architecture Overview
+
+The Klef Sonatta Website follows a modular component-based architecture:
+
+### Project Structure
+
+```
+klef-sonatta-website/
+├── index.html                 # Main website file
+├── assets/
+│   ├── fonts/                # Local font files (Inter, Google Sans)
+│   ├── images/               # Optimized images and favicons
+│   ├── scripts/              # JavaScript modules
+│   │   ├── mega-menu-spa.js
+│   │   ├── clean-urls.js
+│   │   └── scroll-lock.js
+│   └── styles/               # CSS files and design system
+│       ├── design-system.css
+│       └── mega-menu-spa.css
+├── shared/
+│   └── components/           # Reusable UI components
+│       ├── mega-menu/
+│       ├── search/
+│       ├── portfolio/
+│       ├── dynamic-island/
+│       └── adaptive-sheet/
+├── portfolio/                # Portfolio project pages
+└── docs/                     # Documentation and planning
+```
+
+### Component System
+
+The site uses a collection of modular, reusable components located in `/shared/components/`:
+
+<Steps>
+  <Step title="Mega Menu">
+    Desktop hover-based navigation with drill-down mobile experience
+    
+    ```javascript
+    // From mega-menu.js
+    class MegaMenu {
+      handleHover(trigger) {
+        this.activateMenu(trigger.dataset.mega);
+      }
+    }
+    ```
+  </Step>
+  
+  <Step title="Search System">
+    Real-time search with visual results and filter configuration
+    
+    ```javascript
+    // From search-system.js
+    const searchResults = filterPosts(query, posts);
+    displayResults(searchResults);
+    ```
+  </Step>
+  
+  <Step title="Portfolio Grid">
+    Masonry layout with lazy loading and progressive image enhancement
+    
+    ```javascript
+    // From portfolio-grid.js
+    loadPortfolioItems().then(items => {
+      renderMasonryGrid(items);
+    });
+    ```
+  </Step>
+  
+  <Step title="Adaptive Sheet">
+    Responsive component that adapts between bottom sheet (mobile) and side panel (desktop)
+  </Step>
+</Steps>
+
+## Design Philosophy
+
+Klef Sonatta embodies three core principles:
+
+### 1. Web Soberana (Sovereign Web)
+
+<Note>
+Technology sovereignty means writing code that doesn't depend on external frameworks or closed ecosystems. Pure, native web technologies ensure long-term maintainability.
+</Note>
+
+The site uses:
+- **Pure CSS** instead of preprocessors (no Sass/LESS)
+- **Vanilla JavaScript** instead of heavy frameworks
+- **Native APIs** instead of third-party libraries
+
+### 2. Variable-Driven Design
+
+CSS custom properties power the entire design system:
+
+```css
+:root {
+  --k-blue: #0066cc;
+  --k-purple: #6e6eff;
+  --k-max: 1000px;
+  --k-gap: 40px;
+  --k-step-w: 21rem;
+  --k-radius: 0.375rem;
+}
+```
+
+This enables:
+- Deep customization without touching component code
+- Consistent theming across all pages
+- Easy responsive adjustments via media queries
+
+### 3. Performance First
+
+Every architectural decision prioritizes speed:
+- **GPU-accelerated animations** using `translate3d`
+- **Infinite carousels** with pure CSS (no JavaScript)
+- **Lazy loading** for images and components
+- **Minimal HTTP requests** with inlined critical CSS
+
+## Use Cases
+
+<CardGroup cols={2}>
+  <Card title="Agency Portfolios" icon="briefcase">
+    Perfect template for design and development agencies showcasing their work
+  </Card>
+  
+  <Card title="Freelance Developers" icon="user">
+    Professional portfolio site with minimal maintenance requirements
+  </Card>
+  
+  <Card title="Marketing Consultants" icon="chart-line">
+    Service-focused website with integrated search and navigation
+  </Card>
+  
+  <Card title="Creative Studios" icon="palette">
+    Visual storytelling with masonry layouts and interactive components
+  </Card>
+</CardGroup>
+
+## Browser Support
+
+The site is optimized for modern browsers:
+
+- Chrome 90+
+- Firefox 88+
+- Safari 14+
+- Edge 90+
+
+## Core Web Vitals
+
+<CardGroup cols={3}>
+  <Card title="LCP" icon="gauge-high">
+    Largest Contentful Paint optimized with lazy loading and preload hints
+  </Card>
+  
+  <Card title="FID" icon="hand-pointer">
+    First Input Delay minimized with efficient event handlers
+  </Card>
+  
+  <Card title="CLS" icon="arrows-up-down">
+    Cumulative Layout Shift prevented with proper image dimensions
+  </Card>
+</CardGroup>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Quickstart Guide" icon="rocket" href="/quickstart">
+    Get the site running locally in minutes
+  </Card>
+  
+  <Card title="Components" icon="cube" href="/components/mega-menu">
+    Explore the modular component system
+  </Card>
+  
+  <Card title="Design System" icon="swatchbook" href="/architecture/design-system">
+    Learn about the CSS variable architecture
+  </Card>
+  
+  <Card title="Deployment" icon="cloud-arrow-up" href="/development/deployment">
+    Deploy to GitHub Pages or other platforms
+  </Card>
+</CardGroup>
+
+## Project Vision
+
+> Sonatta is not just a website; it's a manifestation of Klef Agency's vision for a more native, efficient, and sovereign web. It combines the power of modern web technologies with the purity of native development, offering a viable alternative to bloated, framework-dependent themes.
+
+For more information, visit [klef.agency](https://klef.agency) or contact the Klef team at hello@klef.agency.

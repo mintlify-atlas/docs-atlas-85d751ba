@@ -1,0 +1,306 @@
+---
+title: 'Mega Menu'
+description: 'Advanced navigation system with desktop and mobile support using Web Components'
+---
+
+# Mega Menu System
+
+The Mega Menu System is a responsive navigation component built as a Web Component that provides rich dropdown menus on desktop and mobile-optimized navigation on smaller screens.
+
+## Overview
+
+The mega menu is implemented in `mega-menu.js` as a custom Web Component (`MegaMenuSystem`) that extends `HTMLElement`. It features:
+
+- **Responsive behavior**: Desktop hover menus and mobile slide-in panels
+- **Dynamic styling**: Runtime CSS injection for hover states
+- **Intersection Observer**: Performance optimization for menu visibility
+- **Debounced resize handling**: Smooth viewport transitions
+
+## Core Implementation
+
+### Web Component Class
+
+The component is defined at `shared/components/mega-menu/mega-menu.js:5`:
+
+```javascript
+class MegaMenuSystem extends HTMLElement {
+  constructor() {
+    super();
+    
+    // Configuration
+    this.config = {
+      selectors: {
+        nav: "#main-nav",
+        barraTop: ".mega-topbar",
+        btnVolver: ".back-btn",
+        btnCerrar: ".close-btn",
+        botones: "a[data-name]",
+        submenus: ".mega-menu",
+      },
+      viewport: {
+        mobile: 768,
+      },
+      debounceDelay: 150,
+    };
+
+    // State management
+    this.state = {
+      currentMegaMenu: null,
+      navigationStack: [],
+      dynamicStyle: null,
+      isMobile: window.innerWidth <= this.config.viewport.mobile,
+    };
+  }
+}
+```
+
+### Initialization
+
+The component initializes when connected to the DOM (`shared/components/mega-menu/mega-menu.js:43`):
+
+```javascript
+connectedCallback() {
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => this.init());
+  } else {
+    this.init();
+  }
+}
+
+init() {
+  this.cacheElements();
+  
+  if (!this.elements.navbar) {
+    console.error('[MegaMenu] Navbar no encontrado');
+    return;
+  }
+
+  this.setupEventListeners();
+  this.setupIntersectionObserver();
+  this.updateMobileState();
+}
+```
+
+## HTML Structure
+
+The mega menu container markup from `mega-menu.html:1`:
+
+```html
+<div class="mega-menus-container">
+    <!-- Diseño y Media -->
+    <div class="mega-menu" id="Diseno">
+        <div class="mega-content">
+            <div class="mega-sidebar">
+                <div class="mega-sidebar-title">Diseño y Media</div>
+                <a href="#">
+                    <span>Branding</span>
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                    </svg>
+                </a>
+            </div>
+
+            <div class="mega-main">
+                <div class="mega-featured">
+                    <div class="featured-image">🎨</div>
+                    <div class="featured-content">
+                        <div class="featured-tag">By Klef•Brand</div>
+                        <h3>Branding</h3>
+                        <p>Descubre las marcas que hemos desarrollado y nuestras estrategias de diseño</p>
+                        <a href="#" class="btn-primary">Ir a Brands</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+```
+
+## Dynamic Style Injection
+
+The menu uses runtime CSS injection for hover states (`mega-menu.js:249`):
+
+```javascript
+applyDynamicStyle(value) {
+  this.removeDynamicStyle();
+
+  this.state.dynamicStyle = document.createElement('style');
+  this.state.dynamicStyle.dataset.origin = 'mega-menu-runtime';
+  this.state.dynamicStyle.textContent = `
+    @media (min-width: ${this.config.viewport.mobile + 1}px) {
+      [data-mega*="${value}"]:hover + .mega-menus-container ${value},
+      [data-mega*="${value}"] + .mega-menus-container ${value}:hover {
+        display: flex;
+        flex-direction: column;
+      }
+    }
+  `;
+  
+  document.head.appendChild(this.state.dynamicStyle);
+}
+```
+
+## Event Handling
+
+### Desktop Hover Behavior
+
+From `mega-menu.js:135`:
+
+```javascript
+onButtonHover(e) {
+  if (this.state.isMobile) return;
+  
+  const value = e.currentTarget.dataset.name;
+  if (this.elements.navbar) {
+    this.elements.navbar.dataset.mega = value;
+  }
+  this.applyDynamicStyle(value);
+}
+```
+
+### Mobile Click Behavior
+
+From `mega-menu.js:127`:
+
+```javascript
+onButtonClick(e) {
+  if (!this.state.isMobile) return;
+  
+  e.preventDefault();
+  const selector = e.currentTarget.dataset.mega;
+  if (selector) this.openMegaMenu(selector);
+}
+```
+
+## Styling
+
+Key CSS from `mega-menu.css:27`:
+
+```css
+.mega-menus-container {
+  position: fixed;
+  top: 65px;
+  left: 0;
+  right: 0;
+  z-index: 998;
+  pointer-events: none;
+}
+
+.mega-menu {
+  display: none;
+  background: white;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+  border-radius: 0 0 20px 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 40px;
+  pointer-events: all;
+}
+
+.mega-menu.active {
+  display: block;
+}
+```
+
+### Mobile Responsive Styles
+
+From `mega-menu.css:159`:
+
+```css
+@media (max-width: 768px) {
+  .mega-menus-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: white;
+    transform: translateX(100%);
+    transition: transform 0.3s ease;
+    overflow-y: auto;
+    z-index: 1001;
+    padding-top: 80px;
+  }
+
+  .mega-menus-container:has(.mega-menu.active) {
+    transform: translateX(0);
+  }
+}
+```
+
+## Performance Optimization
+
+Intersection Observer setup from `mega-menu.js:103`:
+
+```javascript
+setupIntersectionObserver() {
+  const options = {
+    root: null,
+    rootMargin: '50px',
+    threshold: 0.1,
+  };
+
+  this.observer = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('is-visible');
+      } else {
+        entry.target.classList.remove('is-visible');
+      }
+    });
+  }, options);
+
+  this.elements.megaMenus.forEach((menu) => {
+    this.observer.observe(menu);
+  });
+}
+```
+
+## Registration and Auto-initialization
+
+From `mega-menu.js:310`:
+
+```javascript
+// Register the Web Component
+customElements.define('mega-menu-system', MegaMenuSystem);
+
+// Auto-initialization
+document.addEventListener('DOMContentLoaded', () => {
+  if (!document.querySelector('mega-menu-system')) {
+    const megaMenuSystem = document.createElement('mega-menu-system');
+    document.body.appendChild(megaMenuSystem);
+  }
+});
+```
+
+## Usage
+
+To use the mega menu:
+
+1. Include the component files:
+   ```html
+   <link rel="stylesheet" href="/shared/components/mega-menu/mega-menu.css">
+   <script src="/shared/components/mega-menu/mega-menu.js"></script>
+   ```
+
+2. Add trigger buttons with `data-mega` attributes:
+   ```html
+   <a href="#" data-name="Diseno" data-mega="#Diseno">Diseño</a>
+   ```
+
+3. The component will auto-initialize and handle all interactions
+
+## Configuration Options
+
+The component accepts these configuration options:
+
+- `viewport.mobile`: Breakpoint for mobile behavior (default: 768px)
+- `debounceDelay`: Resize event debounce delay (default: 150ms)
+- `selectors`: Custom DOM selectors for menu elements
+
+## Browser Support
+
+Requires:
+- Custom Elements v1
+- Intersection Observer API
+- ES6+ JavaScript features

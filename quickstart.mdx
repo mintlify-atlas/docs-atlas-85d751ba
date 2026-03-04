@@ -1,80 +1,511 @@
 ---
-title: "Quickstart"
-description: "Start building awesome documentation in minutes"
+title: Quickstart Guide
+description: Get the Klef Sonatta Website running locally in minutes with this step-by-step guide
 ---
 
-## Get started in three steps
+## Get Started in 3 Steps
 
-Get your documentation site running locally and make your first customization.
+The Klef Sonatta Website is a static site that requires no build process. You can have it running locally in minutes.
 
-### Step 1: Set up your local environment
-
-<AccordionGroup>
-  <Accordion icon="copy" title="Clone your docs locally">
-    During the onboarding process, you created a GitHub repository with your docs content if you didn't already have one. You can find a link to this repository in your [dashboard](https://dashboard.mintlify.com).
+<Steps>
+  <Step title="Clone the Repository">
+    Clone the project from GitHub to your local machine:
     
-    To clone the repository locally so that you can make and preview changes to your docs, follow the [Cloning a repository](https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository) guide in the GitHub docs.
-  </Accordion>
-  <Accordion icon="rectangle-terminal" title="Start the preview server">
-    1. Install the Mintlify CLI: `npm i -g mint`
-    2. Navigate to your docs directory and run: `mint dev`
-    3. Open `http://localhost:3000` to see your docs live!
+    ```bash
+    git clone https://github.com/klefagency/klef-sonatta-website.git
+    cd klef-sonatta-website
+    ```
     
-    <Tip>Your preview updates automatically as you edit files.</Tip>
-  </Accordion>
-</AccordionGroup>
-
-### Step 2: Deploy your changes
-
-<AccordionGroup>
-  <Accordion icon="github" title="Install our GitHub app">
-    Install the Mintlify GitHub app from your [dashboard](https://dashboard.mintlify.com/settings/organization/github-app).
+    <Info>
+    The repository includes all assets, components, and documentation you need to get started.
+    </Info>
+  </Step>
+  
+  <Step title="Open in Browser">
+    For basic viewing, simply open `index.html` in any modern web browser:
     
-    Our GitHub app automatically deploys your changes to your docs site, so you don't need to manage deployments yourself.
+    ```bash
+    # On macOS
+    open index.html
+    
+    # On Linux
+    xdg-open index.html
+    
+    # On Windows
+    start index.html
+    ```
+    
+    <Warning>
+    Some features like search and portfolio loading may require a local server due to CORS restrictions.
+    </Warning>
+  </Step>
+  
+  <Step title="Run a Local Server (Recommended)">
+    For the best development experience, use a local server:
+    
+    ```bash
+    # Using Python 3
+    python -m http.server 8000
+    
+    # Using Python 2
+    python -m SimpleHTTPServer 8000
+    
+    # Using Node.js (if you have http-server installed)
+    npx http-server -p 8000
+    
+    # Using PHP
+    php -S localhost:8000
+    ```
+    
+    Then open your browser to:
+    ```
+    http://localhost:8000
+    ```
+  </Step>
+</Steps>
+
+## Project Structure Explained
+
+Understanding the project structure will help you navigate and customize the site effectively:
+
+### Root Level Files
+
+```
+klef-sonatta-website/
+├── index.html              # Main entry point - the complete homepage
+├── favicon.ico             # Site favicon
+├── README.md               # Project overview and instructions
+└── test-load-basics.html   # Testing file for component loading
+```
+
+<Tip>
+The `index.html` file contains the entire homepage structure. All interactivity and styling are loaded from separate component files.
+</Tip>
+
+### Assets Directory
+
+The `/assets` folder contains all static resources:
+
+<Accordion title="Fonts">
+  ```
+  assets/fonts/
+  ├── Inter/              # Inter variable font family
+  │   ├── Inter-Variable.ttf
+  │   └── README.txt
+  └── Google_Sans/        # Google Sans font family
+      ├── GoogleSans-Regular.ttf
+      ├── GoogleSans-Bold.ttf
+      └── README.txt
+  ```
+  
+  Both fonts are hosted locally for optimal performance and privacy.
 </Accordion>
-<Accordion icon="palette" title="Update your site name and colors">
-    For a first change, let's update the name and colors of your docs site.
 
-    1. Open `docs.json` in your editor.
-    2. Change the `"name"` field to your project name.
-    3. Update the `"colors"` to match your brand.
-    4. Save and see your changes instantly at `http://localhost:3000`.
-
-    <Tip>Try changing the primary color to see an immediate difference!</Tip>
-  </Accordion>
-</AccordionGroup>
-
-### Step 3: Go live
-
-<Accordion icon="rocket" title="Publish your docs">
-  1. Commit and push your changes.
-  2. Your docs will update and be live in moments!
+<Accordion title="Images">
+  ```
+  assets/images/
+  ├── favicons/           # Various favicon sizes
+  │   ├── favicon-32x32.png
+  │   ├── favicon-192x192.png
+  │   └── favicon-180x180.png
+  └── portfolio/          # Portfolio project images
+      └── [project-images]
+  ```
 </Accordion>
 
-## Next steps
+<Accordion title="Scripts">
+  ```
+  assets/scripts/
+  ├── mega-menu-spa.js    # SPA navigation and mega menu logic
+  ├── clean-urls.js       # URL management
+  └── scroll-lock.js      # Scroll behavior control
+  ```
+  
+  Example from `mega-menu-spa.js`:
+  ```javascript
+  // Initialize SPA routing
+  document.addEventListener('DOMContentLoaded', () => {
+    initRouter();
+    handleNavigationLinks();
+  });
+  ```
+</Accordion>
 
-Now that you have your docs running, explore these key features:
+<Accordion title="Styles">
+  ```
+  assets/styles/
+  ├── design-system.css   # CSS variables and global styles
+  ├── mega-menu-spa.css   # Navigation styles
+  └── css-short.css       # Utility classes
+  ```
+  
+  The design system uses CSS custom properties:
+  ```css
+  :root {
+    --k-blue: #0066cc;
+    --k-purple: #6e6eff;
+    --k-max: 1000px;
+    --k-gap: 40px;
+  }
+  ```
+</Accordion>
 
-<CardGroup cols={2}>
+### Shared Components
 
-<Card title="Write Content" icon="pen-to-square" href="/essentials/markdown">
-  Learn MDX syntax and start writing your documentation.
-</Card>
+The `/shared/components` directory contains modular, reusable components:
 
-<Card title="Customize style" icon="palette" href="/essentials/settings">
-  Make your docs match your brand perfectly.
-</Card>
-
-<Card title="Add code examples" icon="square-code" href="/essentials/code">
-  Include syntax-highlighted code blocks.
-</Card>
-
-<Card title="API documentation" icon="code" href="/api-reference/introduction">
-  Auto-generate API docs from OpenAPI specs.
-</Card>
-
-</CardGroup>
+```
+shared/components/
+├── mega-menu/
+│   ├── mega-menu.js        # Desktop navigation logic
+│   └── mega-menu.css       # Navigation styles
+├── search/
+│   ├── search-system.js    # Search functionality
+│   ├── filter-config.js    # Filter configuration
+│   ├── query-parser.js     # Search query parsing
+│   └── match.js            # Result matching logic
+├── portfolio/
+│   ├── portfolio-grid.js   # Grid layout and rendering
+│   ├── portfolio-loader.js # Data fetching
+│   ├── cover-hydrator.js   # Image loading optimization
+│   └── tabs-navigation.js  # Portfolio filtering tabs
+├── adaptive-sheet/
+│   └── adaptive-sheet.js   # Bottom sheet (mobile) / side panel (desktop)
+├── dynamic-island/
+│   ├── dynamic-island.js   # Notification system
+│   └── dynamic-island.css  # Island styles
+└── hero/
+    └── hero-animation.js   # Hero section animations
+```
 
 <Note>
-  **Need help?** See our [full documentation](https://mintlify.com/docs) or join our [community](https://mintlify.com/community).
+Each component is self-contained with its own JavaScript and CSS. This modular approach makes it easy to customize or replace individual components.
+</Note>
+
+## Using the Components
+
+### Example: Search System
+
+The search system provides real-time results across all content:
+
+```javascript
+// From search-system.js
+class SearchSystem {
+  constructor() {
+    this.initializeSearch();
+    this.bindEvents();
+  }
+  
+  async search(query) {
+    const results = await this.filterContent(query);
+    this.displayResults(results);
+  }
+}
+```
+
+To customize search behavior, edit `/shared/components/search/filter-config.js`:
+
+```javascript
+// Configure which fields to search
+export const searchConfig = {
+  fields: ['title', 'excerpt', 'content'],
+  minLength: 3,
+  maxResults: 20
+};
+```
+
+### Example: Portfolio Grid
+
+The portfolio uses a masonry layout with lazy loading:
+
+```javascript
+// From portfolio-grid.js
+function renderPortfolioGrid(items) {
+  const grid = document.querySelector('.masonry-grid');
+  
+  items.forEach(item => {
+    const card = createPortfolioCard(item);
+    grid.appendChild(card);
+  });
+  
+  // Initialize lazy loading
+  observeImages();
+}
+```
+
+### Example: Mega Menu
+
+The mega menu adapts between desktop and mobile:
+
+```javascript
+// From mega-menu.js
+class MegaMenu {
+  constructor() {
+    this.isMobile = window.innerWidth < 768;
+    this.init();
+  }
+  
+  init() {
+    if (this.isMobile) {
+      this.initMobileMenu();
+    } else {
+      this.initDesktopMenu();
+    }
+  }
+}
+```
+
+## Navigation Overview
+
+The site includes several navigation patterns:
+
+<CardGroup cols={2}>
+  <Card title="Mega Menu" icon="bars">
+    Primary navigation with expandable sections for Services, Portfolio, About, and Contact
+  </Card>
+  
+  <Card title="Global Search" icon="magnifying-glass">
+    Accessible via the search icon in the top-right corner, provides instant results
+  </Card>
+  
+  <Card title="Mobile Menu" icon="mobile">
+    Hamburger menu that transforms into a full-screen navigation experience
+  </Card>
+  
+  <Card title="Portfolio Tabs" icon="folder-open">
+    Filter portfolio items by category (Branding, Strategy, Studio, Dev)
+  </Card>
+</CardGroup>
+
+## Key Features to Explore
+
+### Hero Section
+
+The homepage hero uses a 50/50 split layout:
+
+- **Left Panel**: Value proposition with rotating text animation
+- **Right Panel**: Masonry grid of portfolio previews
+
+```html
+<!-- From index.html -->
+<div class="hero-container">
+  <div class="half-left">
+    <h1 class="hero-title">
+      <span class="word">
+        <span class="letter">T</span>
+        <span class="letter">r</span>
+        <span class="letter">a</span>
+        <!-- ... -->
+      </span>
+    </h1>
+  </div>
+  <div class="half-right">
+    <div class="masonry-grid">
+      <!-- Portfolio items -->
+    </div>
+  </div>
+</div>
+```
+
+### Client Carousel
+
+The brand carousel uses pure CSS for infinite scrolling:
+
+```css
+/* From index.html styles */
+.carouselTrack {
+  animation: infiniteLoop 40s linear infinite;
+}
+
+@keyframes infiniteLoop {
+  from { transform: translate3d(0, 0, 0); }
+  to { transform: translate3d(-50%, 0, 0); }
+}
+```
+
+<Tip>
+The carousel runs on the GPU using `translate3d`, ensuring smooth 60fps animation without JavaScript overhead.
+</Tip>
+
+### Process Section
+
+The "How We Work" section demonstrates the CSS variable system:
+
+```css
+:root {
+  --k-step-w: 21rem;   /* Step width */
+  --k-num-size: 4rem;  /* Number indicator size */
+  --k-gap: 40px;       /* Gap between steps */
+}
+
+.k-steps {
+  display: flex;
+  gap: var(--k-gap);
+}
+
+.k-step {
+  width: var(--k-step-w);
+}
+```
+
+## Customization Quick Tips
+
+<Steps>
+  <Step title="Change Colors">
+    Edit CSS variables in the root or in `assets/styles/design-system.css`:
+    
+    ```css
+    :root {
+      --k-blue: #0066cc;      /* Primary blue */
+      --k-purple: #6e6eff;    /* Accent purple */
+      --brands: rgba(245, 124, 0, 0.9);    /* Branding color */
+      --strategy: rgba(25, 118, 210, 0.9); /* Strategy color */
+    }
+    ```
+  </Step>
+  
+  <Step title="Update Content">
+    Modify the HTML directly in `index.html` for text, images, and layout changes:
+    
+    ```html
+    <h1>Your New Title</h1>
+    <p>Your updated description</p>
+    ```
+  </Step>
+  
+  <Step title="Add Portfolio Items">
+    Add new images to `assets/images/portfolio/` and update the portfolio data in the appropriate JavaScript file.
+  </Step>
+  
+  <Step title="Customize Components">
+    Each component in `/shared/components/` can be modified independently. Edit the JavaScript for behavior changes and CSS for styling.
+  </Step>
+</Steps>
+
+## Development Workflow
+
+### Making Changes
+
+1. **Edit files** in your preferred code editor
+2. **Refresh browser** to see changes (no build step needed)
+3. **Test responsiveness** using browser DevTools
+
+### Testing on Different Devices
+
+```bash
+# Start server on all network interfaces
+python -m http.server 8000 --bind 0.0.0.0
+
+# Access from mobile device on same network
+# http://[your-computer-ip]:8000
+```
+
+### Version Control Best Practices
+
+```bash
+# Create a feature branch
+git checkout -b feature/new-component
+
+# Make your changes
+# ...
+
+# Commit with descriptive messages
+git add .
+git commit -m "Add new portfolio filtering feature"
+
+# Push to remote
+git push origin feature/new-component
+```
+
+## Performance Tips
+
+<CardGroup cols={2}>
+  <Card title="Image Optimization" icon="image">
+    Use WebP format for images and include fallbacks. The site supports lazy loading automatically.
+  </Card>
+  
+  <Card title="CSS Variables" icon="swatchbook">
+    Leverage CSS custom properties for theming instead of duplicating styles.
+  </Card>
+  
+  <Card title="Component Loading" icon="code">
+    Components load asynchronously. Keep the critical path minimal.
+  </Card>
+  
+  <Card title="Minimize Dependencies" icon="boxes-stacked">
+    The site uses zero npm dependencies. Keep it that way for maximum performance.
+  </Card>
+</CardGroup>
+
+## Common Issues & Solutions
+
+<AccordionGroup>
+  <Accordion title="Search not working">
+    **Problem**: Search functionality doesn't return results.
+    
+    **Solution**: Ensure you're running a local server (not just opening the HTML file). CORS restrictions prevent some features from working with `file://` protocol.
+    
+    ```bash
+    python -m http.server 8000
+    ```
+  </Accordion>
+  
+  <Accordion title="Images not loading">
+    **Problem**: Portfolio images show broken image icons.
+    
+    **Solution**: Check that image paths are correct and images exist in `assets/images/`. Use relative paths from the root.
+    
+    ```html
+    <!-- Correct -->
+    <img src="./assets/images/portfolio/project.jpg" />
+    
+    <!-- Incorrect -->
+    <img src="/images/project.jpg" />
+    ```
+  </Accordion>
+  
+  <Accordion title="Styles not applying">
+    **Problem**: Custom CSS changes aren't visible.
+    
+    **Solution**: Clear browser cache or do a hard refresh (Ctrl+Shift+R or Cmd+Shift+R). Check browser console for CSS file loading errors.
+  </Accordion>
+  
+  <Accordion title="Mobile menu not working">
+    **Problem**: Hamburger menu doesn't open on mobile.
+    
+    **Solution**: Verify that JavaScript files are loading correctly. Check the browser console for errors. Ensure `mega-menu.js` is loaded.
+  </Accordion>
+</AccordionGroup>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Explore Components" icon="puzzle-piece" href="/components/mega-menu">
+    Deep dive into each modular component and learn how to customize them
+  </Card>
+  
+  <Card title="Design System" icon="palette" href="/architecture/design-system">
+    Master the CSS variable system and responsive design patterns
+  </Card>
+  
+  <Card title="Deployment Guide" icon="rocket" href="/development/deployment">
+    Learn how to deploy to GitHub Pages, Netlify, or other platforms
+  </Card>
+  
+  <Card title="Development Setup" icon="graduation-cap" href="/development/local-setup">
+    Learn about local development setup and project structure
+  </Card>
+</CardGroup>
+
+## Getting Help
+
+If you encounter issues or have questions:
+
+- **Documentation**: Explore the `/docs` folder in the repository
+- **Contact**: Reach out to hello@klef.agency
+- **GitHub Issues**: Report bugs or request features on the repository
+- **Website**: Visit [klef.agency](https://klef.agency) for more information
+
+<Note>
+The Klef Sonatta Website is designed to be simple yet powerful. The lack of build tools and dependencies means you can start customizing immediately without learning complex toolchains.
 </Note>
