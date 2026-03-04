@@ -41,9 +41,12 @@
             "group": "Components",
             "pages": [
               "components/mega-menu",
+              "components/navigation-system",
+              "components/search-system",
               "components/hero",
               "components/portfolio-grid",
               "components/footer",
+              "components/adaptive-sheet",
               "components/dynamic-island"
             ]
           },

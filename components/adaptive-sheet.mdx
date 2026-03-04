@@ -1,0 +1,421 @@
+---
+title: Adaptive Sheet
+description: Responsive bottom sheet (mobile) and side panel (desktop) component for portfolio details and contact forms
+---
+
+## Overview
+
+The Adaptive Sheet is a versatile component that adapts its presentation based on device: a swipeable bottom sheet on mobile and a side panel on desktop. It's used throughout the site for portfolio details, contact forms, and content overlays.
+
+**Source**: `~/workspace/source/shared/components/adaptive-sheet/adaptive-sheet.js`
+
+## Key Features
+
+<CardGroup cols={2}>
+  <Card title="Responsive Layout" icon="mobile-screen">
+    Bottom sheet on mobile, side panel on desktop
+  </Card>
+  <Card title="Swipe Gestures" icon="hand">
+    Touch-enabled drag-to-close on mobile devices
+  </Card>
+  <Card title="Keyboard Support" icon="keyboard">
+    ESC key closes the sheet
+  </Card>
+  <Card title="Backdrop Overlay" icon="layer-group">
+    Darkens background content when sheet is open
+  </Card>
+</CardGroup>
+
+## Architecture
+
+The Adaptive Sheet uses a class-based architecture with state management:
+
+```javascript
+// adaptive-sheet.js (lines 11-23)
+class AdaptiveSheet {
+  constructor() {
+    this.sheet = document.getElementById("bottomsheet");
+    this.backdrop = document.getElementById("backdrop");
+    this.closeBtn = document.getElementById("close-btn");
+    this.topControls = document.querySelector(".sheet-top-controls");
+    this.content = document.getElementById("sheet-content");
+    this.state = "CLOSED";  // CLOSED | OPEN
+
+    this.startY = 0;
+    this.currentY = 0;
+    this.isDragging = false;
+  }
+}
+```
+
+**States:**
+- `CLOSED` - Sheet is hidden
+- `OPEN` - Sheet is fully visible
+
+## HTML Structure
+
+```html
+<!-- Backdrop overlay -->
+<div id="backdrop" class="backdrop"></div>
+
+<!-- Adaptive Sheet -->
+<div id="bottomsheet" class="bottomsheet">
+  <!-- Drag handle (mobile only) -->
+  <div class="drag-handle"></div>
+  
+  <!-- Top controls -->
+  <div class="sheet-top-controls">
+    <button class="close-btn" id="close-btn">×</button>
+    <button class="top-chevron">⌄</button>
+    
+    <div class="top-controls-dropdown">
+      <!-- Dropdown menu items -->
+    </div>
+  </div>
+  
+  <!-- Sheet content -->
+  <div id="sheet-content" class="sheet-content">
+    <!-- Dynamic content loaded here -->
+  </div>
+</div>
+```
+
+## Initialization
+
+```javascript
+// adaptive-sheet.js (lines 25-79)
+init() {
+  if (!this.sheet || !this.backdrop) {
+    console.warn("⚠️ Adaptive Sheet elements not found");
+    return;
+  }
+
+  // Drag handle for mobile
+  const dragHandle = this.sheet.querySelector(".drag-handle");
+  if (dragHandle) {
+    dragHandle.addEventListener("touchstart", this.handleTouchStart.bind(this));
+    dragHandle.addEventListener("touchmove", this.handleTouchMove.bind(this));
+    dragHandle.addEventListener("touchend", this.handleTouchEnd.bind(this));
+    dragHandle.addEventListener("mousedown", this.handleMouseDown.bind(this));
+  }
+
+  // Close button
+  if (this.closeBtn) {
+    this.closeBtn.addEventListener("click", () => this.close());
+  }
+
+  // Backdrop click
+  this.backdrop.addEventListener("click", () => this.close());
+
+  // Escape key
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && this.state !== "CLOSED") {
+      this.close();
+    }
+  });
+
+  // Window resize
+  window.addEventListener("resize", () => {
+    if (this.state !== "CLOSED") {
+      this.adjustForViewport();
+    }
+  });
+
+  console.log("✅ Adaptive Sheet initialized");
+}
+```
+
+## Opening the Sheet
+
+```javascript
+open(content) {
+  // Load content
+  if (this.content) {
+    this.content.innerHTML = content;
+  }
+  
+  // Show backdrop
+  this.backdrop.classList.add("active");
+  
+  // Show sheet
+  this.sheet.classList.add("open");
+  this.state = "OPEN";
+  
+  // Adjust for viewport
+  this.adjustForViewport();
+  
+  // Lock scroll
+  if (typeof ScrollLock !== "undefined") {
+    ScrollLock.lock();
+  }
+}
+```
+
+**Usage:**
+```javascript
+const sheet = new AdaptiveSheet();
+sheet.init();
+
+// Open with HTML content
+sheet.open(`
+  <h2>Portfolio Item</h2>
+  <p>Details about the portfolio item...</p>
+`);
+```
+
+## Closing the Sheet
+
+```javascript
+close() {
+  this.sheet.classList.remove("open");
+  this.backdrop.classList.remove("active");
+  this.state = "CLOSED";
+  
+  // Unlock scroll
+  if (typeof ScrollLock !== "undefined") {
+    ScrollLock.unlock();
+  }
+  
+  // Clear content after animation
+  setTimeout(() => {
+    if (this.content) {
+      this.content.innerHTML = "";
+    }
+  }, 300);
+}
+```
+
+## Touch Gestures
+
+The sheet supports swipe-down-to-close on mobile:
+
+```javascript
+handleTouchStart(e) {
+  this.startY = e.touches[0].clientY;
+  this.isDragging = true;
+}
+
+handleTouchMove(e) {
+  if (!this.isDragging) return;
+  
+  this.currentY = e.touches[0].clientY;
+  const deltaY = this.currentY - this.startY;
+  
+  // Only allow downward swipes
+  if (deltaY > 0) {
+    this.sheet.style.transform = `translateY(${deltaY}px)`;
+  }
+}
+
+handleTouchEnd(e) {
+  if (!this.isDragging) return;
+  this.isDragging = false;
+  
+  const deltaY = this.currentY - this.startY;
+  
+  // Close if swiped down more than 100px
+  if (deltaY > 100) {
+    this.close();
+  } else {
+    // Snap back to position
+    this.sheet.style.transform = "";
+  }
+}
+```
+
+## Viewport Adjustment
+
+The sheet adapts its layout based on viewport size:
+
+```javascript
+adjustForViewport() {
+  const isMobile = window.innerWidth <= 768;
+  
+  if (isMobile) {
+    // Mobile: Bottom sheet
+    this.sheet.classList.add("mobile");
+    this.sheet.classList.remove("desktop");
+  } else {
+    // Desktop: Side panel
+    this.sheet.classList.add("desktop");
+    this.sheet.classList.remove("mobile");
+  }
+}
+```
+
+## Top Controls Dropdown
+
+The sheet includes a dropdown menu in the top controls:
+
+```javascript
+// adaptive-sheet.js (lines 81-105)
+initTopControls() {
+  const chevronBtn = this.sheet.querySelector(".top-chevron");
+  const dropdown = this.sheet.querySelector(".top-controls-dropdown");
+
+  if (chevronBtn && dropdown) {
+    chevronBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      chevronBtn.classList.toggle("expanded");
+      dropdown.classList.toggle("active");
+    });
+  }
+
+  // Close dropdown when clicking outside
+  document.addEventListener("click", (e) => {
+    if (dropdown && dropdown.classList.contains("active")) {
+      const isClickInside =
+        chevronBtn.contains(e.target) || dropdown.contains(e.target);
+      if (!isClickInside) {
+        chevronBtn.classList.remove("expanded");
+        dropdown.classList.remove("active");
+      }
+    }
+  });
+}
+```
+
+## CSS Variables
+
+The sheet uses CSS variables for theming:
+
+```css
+:root {
+  --sheet-bg: #ffffff;
+  --sheet-backdrop: rgba(0, 0, 0, 0.5);
+  --sheet-radius: 16px;
+  --sheet-transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.bottomsheet {
+  background: var(--sheet-bg);
+  border-radius: var(--sheet-radius) var(--sheet-radius) 0 0;
+  transition: transform var(--sheet-transition);
+}
+
+/* Mobile: Bottom sheet */
+.bottomsheet.mobile {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  max-height: 90vh;
+}
+
+/* Desktop: Side panel */
+.bottomsheet.desktop {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 500px;
+  max-width: 90vw;
+  border-radius: 0;
+}
+```
+
+## Use Cases
+
+<Tabs>
+  <Tab title="Portfolio Details">
+    ```javascript
+    // Open sheet with portfolio item details
+    const sheet = new AdaptiveSheet();
+    sheet.open(`
+      <div class="portfolio-detail">
+        <img src="${item.image}" alt="${item.title}" />
+        <h2>${item.title}</h2>
+        <p>${item.description}</p>
+        <div class="tags">${item.tags.map(tag => 
+          `<span class="tag">${tag}</span>`
+        ).join('')}</div>
+      </div>
+    `);
+    ```
+  </Tab>
+  
+  <Tab title="Contact Form">
+    ```javascript
+    // Open sheet with contact form
+    sheet.open(`
+      <form class="contact-form">
+        <h2>Get in Touch</h2>
+        <input type="text" placeholder="Name" required />
+        <input type="email" placeholder="Email" required />
+        <textarea placeholder="Message" required></textarea>
+        <button type="submit">Send</button>
+      </form>
+    `);
+    ```
+  </Tab>
+  
+  <Tab title="Quick Actions">
+    ```javascript
+    // Open sheet with action menu
+    sheet.open(`
+      <div class="action-menu">
+        <button onclick="shareItem()">Share</button>
+        <button onclick="saveItem()">Save</button>
+        <button onclick="reportItem()">Report</button>
+      </div>
+    `);
+    ```
+  </Tab>
+</Tabs>
+
+## Integration with Portfolio
+
+The sheet is commonly used in portfolio pages:
+
+```javascript
+// portfolio-grid.js integration
+document.querySelectorAll('.portfolio-card').forEach(card => {
+  card.addEventListener('click', (e) => {
+    e.preventDefault();
+    
+    const itemId = card.dataset.id;
+    const itemData = getPortfolioItem(itemId);
+    
+    // Open adaptive sheet with portfolio details
+    const sheet = new AdaptiveSheet();
+    sheet.init();
+    sheet.open(renderPortfolioDetail(itemData));
+  });
+});
+```
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion title="Always call init() before open()">
+    Initialize the sheet before opening it to ensure event listeners are attached.
+    ```javascript
+    const sheet = new AdaptiveSheet();
+    sheet.init();
+    sheet.open(content);
+    ```
+  </Accordion>
+  
+  <Accordion title="Keep content focused">
+    The sheet is for quick views and actions. Don't overload it with too much content.
+  </Accordion>
+  
+  <Accordion title="Test touch gestures on real devices">
+    Swipe gestures behave differently on actual touch devices vs. browser dev tools.
+  </Accordion>
+  
+  <Accordion title="Provide clear close affordances">
+    Always show a close button and backdrop. Users should have multiple ways to dismiss the sheet.
+  </Accordion>
+</AccordionGroup>
+
+## Related Components
+
+<CardGroup cols={2}>
+  <Card title="Portfolio Grid" icon="grid" href="/components/portfolio-grid">
+    Uses Adaptive Sheet to display portfolio item details
+  </Card>
+  <Card title="Dynamic Island" icon="circle-dot" href="/components/dynamic-island">
+    Can trigger Adaptive Sheet for quick actions
+  </Card>
+</CardGroup>

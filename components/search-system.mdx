@@ -1,0 +1,395 @@
+---
+title: Search System
+description: GraphQL-powered search with advanced filtering, query parsing, and real-time suggestions
+---
+
+## Overview
+
+The Search System provides global site search with advanced filter support using key:value syntax. It queries a GraphQL endpoint for posts and pages, with client-side filtering for fine-grained control.
+
+**Source**: `~/workspace/source/shared/components/search/search-system.js`
+
+## Key Features
+
+<CardGroup cols={2}>
+  <Card title="GraphQL Integration" icon="database">
+    Queries WordPress GraphQL endpoint for posts and pages
+  </Card>
+  <Card title="Advanced Filtering" icon="filter">
+    Supports key:value filters (type:, category:, tag:, author:, after:, before:)
+  </Card>
+  <Card title="Query Parser" icon="code">
+    Parses complex search queries with filters and exclusions
+  </Card>
+  <Card title="Recent Searches" icon="clock">
+    Stores and displays recent searches in localStorage
+  </Card>
+</CardGroup>
+
+## Configuration
+
+```javascript
+// search-system.js (lines 29-34)
+const CONFIG = {
+  GRAPHQL_ENDPOINT: "https://klef.newfacecards.com/graphql",
+  MIN_SEARCH_LENGTH: 2,
+  DEBOUNCE_DELAY: 300,
+  FILTER_DEBOUNCE_DELAY: 150,
+};
+```
+
+## Filter Syntax
+
+The search system supports advanced key:value filter syntax:
+
+<Tabs>
+  <Tab title="Content Type">
+    ```
+    type:portfolio
+    type:blog
+    type:page
+    ```
+    Filter by content type
+  </Tab>
+  
+  <Tab title="Category">
+    ```
+    category:branding
+    category:development
+    ```
+    Filter by post category
+  </Tab>
+  
+  <Tab title="Tags">
+    ```
+    tag:design
+    tag:strategy
+    ```
+    Filter by post tags
+  </Tab>
+  
+  <Tab title="Author">
+    ```
+    author:john
+    ```
+    Filter by author name
+  </Tab>
+  
+  <Tab title="Date Range">
+    ```
+    after:2024-01-01
+    before:2024-12-31
+    ```
+    Filter by publication date
+  </Tab>
+  
+  <Tab title="Exclusions">
+    ```
+    -draft
+    -archived
+    ```
+    Exclude terms (minus prefix)
+  </Tab>
+</Tabs>
+
+## Query Parser
+
+The system uses the QueryParser module to extract filters from search queries:
+
+```javascript
+// search-system.js (lines 43-48)
+function processFilters(query) {
+  if (typeof QueryParser === "undefined") {
+    return { text: query, filters: {}, exclude: [] };
+  }
+  return QueryParser.parse(query);
+}
+```
+
+**Returns:**
+```javascript
+{
+  text: "search terms",           // Plain text without filters
+  filters: {                       // Parsed key:value filters
+    type: { key: "type", value: "portfolio" },
+    category: { key: "category", value: "branding" }
+  },
+  exclude: ["draft", "archived"]  // Terms to exclude
+}
+```
+
+## Local Filtering
+
+When GraphQL doesn't support specific filters, the system applies them client-side:
+
+```javascript
+// search-system.js (lines 53-135)
+function filterResultsLocally(results, filters) {
+  if (!filters || (Object.keys(filters.filters).length === 0 && 
+                    filters.exclude.length === 0)) {
+    return results;
+  }
+
+  return results.filter(function (item) {
+    // Filter by type
+    if (filterConfig.type) {
+      var itemType = getItemType(item);
+      if (itemType !== filterConfig.type.value) {
+        return false;
+      }
+    }
+
+    // Filter by category
+    if (filterConfig.category) {
+      var itemCategories = getItemCategories(item);
+      // Check if item has matching category
+    }
+
+    // Filter by tag, author, date...
+    // Verify exclusions
+    
+    return true;
+  });
+}
+```
+
+## GraphQL Query
+
+The search system queries WordPress posts and pages:
+
+```graphql
+query SearchQuery($search: String!) {
+  posts(where: { search: $search }, first: 20) {
+    nodes {
+      title
+      excerpt
+      slug
+      date
+      featuredImage {
+        node {
+          sourceUrl
+        }
+      }
+      categories {
+        nodes {
+          name
+        }
+      }
+      tags {
+        nodes {
+          name
+        }
+      }
+      coAuthors {
+        nodes {
+          name
+        }
+      }
+    }
+  }
+  pages(where: { search: $search }, first: 10) {
+    nodes {
+      title
+      excerpt
+      slug
+      date
+    }
+  }
+}
+```
+
+## User Interface
+
+### Opening Search
+
+```javascript
+// Triggered by search button or keyboard shortcut
+function openSearch() {
+  if (!searchOverlay) {
+    searchOverlay = document.getElementById("searchOverlay");
+  }
+  
+  searchOverlay.classList.add("active");
+  searchInput.focus();
+  
+  // Show recent searches if input is empty
+  if (!searchInput.value) {
+    displayRecentSearches();
+  }
+}
+```
+
+### Search Overlay HTML
+
+```html
+<div id="searchOverlay" class="search-overlay">
+  <div class="search-container">
+    <div class="search-input-wrapper">
+      <input 
+        type="text" 
+        id="searchInput" 
+        placeholder="Search posts, pages, portfolio..."
+        autocomplete="off"
+      />
+      <button id="clearInput" class="clear-btn">×</button>
+    </div>
+    
+    <div id="filterChips" class="filter-chips"></div>
+    
+    <div id="quickSuggestions" class="quick-suggestions">
+      <div class="recent-searches">
+        <!-- Recent searches display here -->
+      </div>
+    </div>
+    
+    <div id="searchResults" class="search-results">
+      <!-- Results display here -->
+    </div>
+  </div>
+</div>
+```
+
+## Debouncing
+
+The system debounces search input to avoid excessive API calls:
+
+```javascript
+// search-system.js
+let searchTimeout;
+
+function handleSearchInput(query) {
+  clearTimeout(searchTimeout);
+  
+  searchTimeout = setTimeout(function() {
+    performSearch(query);
+  }, CONFIG.DEBOUNCE_DELAY);
+}
+```
+
+- **Search delay**: 300ms
+- **Filter delay**: 150ms (faster for real-time feedback)
+
+## Recent Searches
+
+Recent searches are stored in localStorage and displayed when the search overlay opens:
+
+```javascript
+// Store recent search
+function addRecentSearch(query) {
+  if (!query || query.length < 2) return;
+  
+  // Remove duplicates
+  recentSearches = recentSearches.filter(s => s !== query);
+  
+  // Add to beginning
+  recentSearches.unshift(query);
+  
+  // Keep only last 5
+  recentSearches = recentSearches.slice(0, 5);
+  
+  // Save to localStorage
+  localStorage.setItem("recentSearches", JSON.stringify(recentSearches));
+}
+
+// Display recent searches
+function displayRecentSearches() {
+  if (recentSearches.length === 0) return;
+  
+  var html = '<h3>Recent Searches</h3><ul>';
+  recentSearches.forEach(function(search) {
+    html += '<li><button class="recent-search-btn">' + 
+            escapeHtml(search) + '</button></li>';
+  });
+  html += '</ul>';
+  
+  quickSuggestions.innerHTML = html;
+}
+```
+
+## Filter Chips
+
+Active filters are displayed as removable chips above search results:
+
+```javascript
+function displayFilterChips(filters) {
+  if (!filters || Object.keys(filters.filters).length === 0) {
+    filterChipsContainer.innerHTML = '';
+    return;
+  }
+  
+  var chips = [];
+  
+  Object.keys(filters.filters).forEach(function(key) {
+    var filter = filters.filters[key];
+    chips.push(
+      '<span class="filter-chip" data-filter="' + key + '">' +
+      '<strong>' + key + ':</strong> ' + filter.value +
+      '<button class="remove-filter" data-filter="' + key + '">×</button>' +
+      '</span>'
+    );
+  });
+  
+  filterChipsContainer.innerHTML = chips.join('');
+}
+```
+
+## Usage Examples
+
+### Basic Search
+
+```
+design
+```
+Searches for "design" across all content.
+
+### Filtered Search
+
+```
+design type:portfolio category:branding
+```
+Searches for "design" in portfolio items within the branding category.
+
+### Date Range
+
+```
+strategy after:2024-01-01 before:2024-12-31
+```
+Searches for "strategy" published in 2024.
+
+### Exclusions
+
+```
+website -wordpress -draft
+```
+Searches for "website" excluding results containing "wordpress" or "draft".
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion title="Combine text and filters">
+    Use plain text search combined with filters for best results: `branding type:portfolio category:identity`
+  </Accordion>
+  
+  <Accordion title="Use client-side filtering strategically">
+    GraphQL provides initial filtering. Use local filtering for refinements that GraphQL doesn't support.
+  </Accordion>
+  
+  <Accordion title="Test filter combinations">
+    Not all filter combinations make sense. Test edge cases like `type:page category:blog`.
+  </Accordion>
+  
+  <Accordion title="Provide filter examples">
+    Show users example queries in the search placeholder or help text.
+  </Accordion>
+</AccordionGroup>
+
+## Related Components
+
+<CardGroup cols={2}>
+  <Card title="Query Parser" icon="code" href="/architecture/components">
+    Parses search queries and extracts filters
+  </Card>
+  <Card title="Navigation System" icon="bars" href="/components/navigation-system">
+    Integrates search overlay with navigation
+  </Card>
+</CardGroup>

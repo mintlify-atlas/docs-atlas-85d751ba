@@ -1,0 +1,420 @@
+---
+title: Navigation System
+description: Core navigation controller managing mobile menus, mega menus, and desktop hover interactions
+---
+
+## Overview
+
+The Navigation System is the central controller for all navigation interactions in the Klef Sonatta Website. It manages both mobile hamburger menus and desktop hover-based mega menus, providing a seamless navigation experience across devices.
+
+**Source**: `~/workspace/source/shared/components/navigation/navigation-system.js`
+
+## Key Features
+
+<CardGroup cols={2}>
+  <Card title="Responsive Navigation" icon="mobile">
+    Automatically adapts between mobile drawer and desktop hover menus
+  </Card>
+  <Card title="iOS Scroll Lock" icon="lock">
+    Prevents background scrolling on mobile using compatible scroll lock
+  </Card>
+  <Card title="Mega Menu Integration" icon="table-cells-large">
+    Coordinates with mega menu system for rich dropdown content
+  </Card>
+  <Card title="Keyboard Support" icon="keyboard">
+    ESC key closes menus and navigation overlays
+  </Card>
+</CardGroup>
+
+## Architecture
+
+The navigation system uses a self-contained IIFE pattern with global exports for compatibility:
+
+```javascript
+// navigation-system.js (lines 5-300)
+(function () {
+  "use strict";
+  
+  // DOM References
+  let navbar, megaTopbar, backBtn, megaMenusContainer;
+  let currentMegaMenu = null;
+  let dynamicStyle = null;
+  
+  // Core Functions
+  function toggleMenu() { /* ... */ }
+  function openMegaMenu(selector) { /* ... */ }
+  function goBack() { /* ... */ }
+  function closeMenu() { /* ... */ }
+  
+  // Export to global scope
+  window.toggleMenu = toggleMenu;
+  window.goBack = goBack;
+  window.closeMenu = closeMenu;
+  window.openMegaMenu = openMegaMenu;
+})();
+```
+
+## Core Functions
+
+### toggleMenu()
+
+Toggles the mobile navigation drawer open/closed with iOS-compatible scroll locking.
+
+```javascript
+// navigation-system.js (lines 14-36)
+function toggleMenu() {
+  if (!navbar) {
+    navbar = document.getElementById("main-nav");
+  }
+  if (!navbar) return;
+
+  const isOpen = navbar.classList.toggle("mobile-open");
+  
+  // Use iOS-compatible scroll lock
+  if (typeof ScrollLock !== "undefined") {
+    if (isOpen) {
+      ScrollLock.lock();
+    } else {
+      ScrollLock.unlock();
+    }
+  } else {
+    document.body.style.overflow = isOpen ? "hidden" : "";
+  }
+
+  // Hide Dynamic Island if visible
+  if (typeof hideDynamicIsland === "function") {
+    hideDynamicIsland();
+  }
+}
+```
+
+**Features:**
+- Toggles `.mobile-open` class on navbar
+- Integrates with ScrollLock utility for iOS compatibility
+- Automatically hides Dynamic Island when menu opens
+- Fallback to basic `overflow: hidden` if ScrollLock unavailable
+
+### openMegaMenu(selector)
+
+Opens a specific mega menu panel by CSS selector.
+
+```javascript
+// navigation-system.js (lines 38-76)
+function openMegaMenu(selector) {
+  if (!megaMenusContainer) {
+    megaMenusContainer = document.querySelector(".mega-menus-container");
+  }
+  if (!megaTopbar) {
+    megaTopbar = document.querySelector(".mega-topbar");
+  }
+  
+  const menu = document.querySelector(selector);
+  if (!menu) {
+    console.error("No se encontró el mega menú:", selector);
+    return;
+  }
+
+  // Close all mega menus
+  document
+    .querySelectorAll(".mega-menu")
+    .forEach((m) => m.classList.remove("active"));
+
+  // Show container and selected menu
+  if (megaMenusContainer) {
+    megaMenusContainer.classList.add("show");
+  }
+  menu.classList.add("active");
+
+  currentMegaMenu = menu;
+
+  // Topbar is ONLY for mobile
+  if (window.innerWidth <= 768) {
+    if (megaTopbar) {
+      megaTopbar.classList.add("active");
+    }
+    if (backBtn) backBtn.classList.add("visible");
+  }
+}
+```
+
+**Parameters:**
+- `selector` (string): CSS selector for the mega menu (e.g., `"#mega-brands"`)
+
+**Behavior:**
+- Closes all other mega menus
+- Shows the mega menus container
+- Activates the target menu
+- Mobile: Shows topbar with back button
+- Desktop: Menu appears below navbar on hover
+
+### goBack()
+
+Navigates back from a mega menu to the main menu (mobile only).
+
+```javascript
+// navigation-system.js (lines 78-91)
+function goBack() {
+  if (currentMegaMenu) {
+    currentMegaMenu.classList.remove("active");
+  }
+
+  if (megaMenusContainer) megaMenusContainer.classList.remove("show");
+  currentMegaMenu = null;
+
+  // Topbar is ONLY for mobile
+  if (window.innerWidth <= 768) {
+    if (megaTopbar) megaTopbar.classList.remove("active");
+    if (backBtn) backBtn.classList.remove("visible");
+  }
+}
+```
+
+### closeMenu()
+
+Closes all navigation panels and unlocks scroll.
+
+```javascript
+// navigation-system.js (lines 93-123)
+function closeMenu() {
+  if (navbar) navbar.classList.remove("mobile-open");
+  if (megaMenusContainer) megaMenusContainer.classList.remove("show");
+  if (megaTopbar) megaTopbar.classList.remove("active");
+  if (backBtn) backBtn.classList.remove("visible");
+  
+  // Use iOS-compatible scroll unlock
+  if (typeof ScrollLock !== "undefined") {
+    ScrollLock.unlock();
+  } else {
+    document.body.style.overflow = "";
+  }
+
+  document
+    .querySelectorAll(".mega-menu")
+    .forEach((menu) => menu.classList.remove("active"));
+  currentMegaMenu = null;
+  removeDynamicStyle();
+}
+```
+
+## Dynamic Styling
+
+The navigation system injects runtime CSS for desktop hover interactions:
+
+```javascript
+// navigation-system.js (lines 126-146)
+function applyDynamicStyle(value) {
+  removeDynamicStyle();
+  dynamicStyle = document.createElement("style");
+  dynamicStyle.dataset.origin = "mega-menu-runtime";
+  dynamicStyle.textContent = `
+    @media (min-width: 769px) {
+      [data-mega*="${value}"]:hover + .mega-menus-container ${value},
+      [data-mega*="${value}"] + .mega-menus-container ${value}:hover {
+        display: block;
+      }
+    }
+  `;
+  document.head.appendChild(dynamicStyle);
+}
+```
+
+**Purpose:**
+- Enables CSS-only hover mega menus on desktop
+- Injects styles at runtime based on menu configuration
+- Automatically cleaned up when menu closes
+
+## Event Listeners
+
+### HTML Data Attributes
+
+The system uses data attributes for declarative event binding:
+
+```html
+<!-- Toggle mobile menu -->
+<button data-action="toggle-menu">Menu</button>
+
+<!-- Go back in mega menu -->
+<button data-action="go-back">Back</button>
+
+<!-- Close all menus -->
+<button data-action="close-menu">Close</button>
+
+<!-- Open contact sheet -->
+<button data-action="open-contact-sheet">Contact</button>
+
+<!-- Mega menu trigger -->
+<button data-mega="#mega-brands">Brands</button>
+```
+
+### Initialization
+
+```javascript
+// navigation-system.js (lines 149-284)
+function initNavigationListeners() {
+  if (window.navigationInitialized) return;
+  window.navigationInitialized = true;
+
+  // Cache DOM references
+  navbar = document.getElementById("main-nav");
+  megaTopbar = document.querySelector(".mega-topbar");
+  backBtn = document.querySelector(".back-btn");
+  megaMenusContainer = document.querySelector(".mega-menus-container");
+
+  // Bind action buttons
+  document.querySelectorAll('[data-action="toggle-menu"]').forEach((btn) => {
+    btn.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      toggleMenu();
+    });
+  });
+
+  // Mega menu triggers
+  document.querySelectorAll("[data-mega]").forEach((btn) => {
+    // Mobile: Click to open
+    btn.addEventListener("click", (e) => {
+      if (window.innerWidth <= 768) {
+        e.preventDefault();
+        const selector = btn.getAttribute("data-mega");
+        if (selector) openMegaMenu(selector);
+      }
+    });
+
+    // Desktop: Hover to open
+    btn.addEventListener("mouseenter", (e) => {
+      if (window.innerWidth > 768) {
+        const selector = btn.getAttribute("data-mega");
+        if (selector) openMegaMenu(selector);
+      }
+    });
+  });
+
+  // Close on ESC key
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") {
+      closeMenu();
+    }
+  });
+
+  // Close on window resize to desktop
+  window.addEventListener("resize", () => {
+    if (window.innerWidth > 768) {
+      closeMenu();
+    }
+  });
+}
+```
+
+## Integration with Other Components
+
+### ScrollLock Integration
+
+```javascript
+// Uses ScrollLock utility for iOS-compatible scroll prevention
+if (typeof ScrollLock !== "undefined") {
+  ScrollLock.lock();   // Prevent scroll
+  ScrollLock.unlock(); // Restore scroll
+}
+```
+
+### Dynamic Island Integration
+
+```javascript
+// Hides Dynamic Island when menu opens
+if (typeof hideDynamicIsland === "function") {
+  hideDynamicIsland();
+}
+```
+
+### Sheet System Integration
+
+```javascript
+// Opens contact sheet from navigation
+if (typeof loadSheet === "function" && typeof sheetUtils !== "undefined") {
+  loadSheet(sheetUtils.createContactConfig("General Inquiry"));
+}
+```
+
+## Responsive Behavior
+
+<Tabs>
+  <Tab title="Mobile (≤768px)">
+    - Click hamburger → Full-screen drawer slides in
+    - Click mega menu item → Submenu slides over
+    - Back button → Return to main menu
+    - Close button → Exit navigation
+    - Scroll locked while open
+  </Tab>
+  <Tab title="Desktop (>768px)">
+    - Hover on menu item → Mega menu appears below navbar
+    - Move mouse away → Mega menu closes
+    - No scroll locking
+    - No back button or topbar
+  </Tab>
+</Tabs>
+
+## Usage Example
+
+```html
+<!-- Main navbar -->
+<nav id="main-nav">
+  <button data-action="toggle-menu">
+    <span>Menu</span>
+  </button>
+  
+  <ul>
+    <li>
+      <button data-mega="#mega-brands">Brands</button>
+    </li>
+    <li>
+      <button data-mega="#mega-strategy">Strategy</button>
+    </li>
+  </ul>
+</nav>
+
+<!-- Mega menus container -->
+<div class="mega-menus-container">
+  <div class="mega-topbar">
+    <button data-action="go-back">← Back</button>
+  </div>
+  
+  <div id="mega-brands" class="mega-menu">
+    <!-- Mega menu content -->
+  </div>
+  
+  <div id="mega-strategy" class="mega-menu">
+    <!-- Mega menu content -->
+  </div>
+</div>
+```
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion title="Use data-action attributes for navigation controls">
+    Always use `data-action` attributes instead of inline onclick handlers for better separation of concerns and easier testing.
+  </Accordion>
+  
+  <Accordion title="Test across devices">
+    Mobile and desktop navigation behave differently. Test hover interactions on desktop and touch/click on mobile.
+  </Accordion>
+  
+  <Accordion title="Ensure ScrollLock is loaded">
+    The system falls back gracefully, but ScrollLock provides the best mobile experience, especially on iOS.
+  </Accordion>
+  
+  <Accordion title="Respect the 768px breakpoint">
+    The system uses 768px as the mobile/desktop threshold. Ensure your CSS matches this breakpoint.
+  </Accordion>
+</AccordionGroup>
+
+## Related Components
+
+<CardGroup cols={2}>
+  <Card title="Mega Menu" icon="table-cells-large" href="/components/mega-menu">
+    Rich dropdown menus with sections and links
+  </Card>
+  <Card title="Dynamic Island" icon="circle-dot" href="/components/dynamic-island">
+    Floating action bar that integrates with navigation
+  </Card>
+</CardGroup>
