@@ -1,0 +1,75 @@
+{
+  "projectType": "frontend",
+  "projectName": "Klef Sonatta Website",
+  "projectDescription": "A modern static website for Klef Agency featuring SPA navigation, dynamic portfolio showcase, and component-based architecture built with vanilla JavaScript.",
+  "theme": "almond",
+  "primaryColor": "#eadad3",
+  "lightColor": "#59a17d",
+  "darkColor": "#1f2026",
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Get Started",
+            "pages": ["introduction", "quickstart"]
+          },
+          {
+            "group": "Architecture",
+            "pages": ["architecture/overview", "architecture/design-system", "architecture/components"]
+          },
+          {
+            "group": "Components",
+            "pages": [
+              "components/mega-menu",
+              "components/hero",
+              "components/portfolio-grid",
+              "components/footer",
+              "components/dynamic-island"
+            ]
+          },
+          {
+            "group": "Styling",
+            "pages": ["styling/css-variables", "styling/responsive-design", "styling/theme-customization"]
+          }
+        ]
+      },
+      {
+        "tab": "Development",
+        "groups": [
+          {
+            "group": "Setup",
+            "pages": ["development/local-setup", "development/deployment"]
+          },
+          {
+            "group": "Guides",
+            "pages": [
+              "development/adding-portfolio-items",
+              "development/creating-components",
+              "development/customizing-menu"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "SPA-style navigation with mega menu",
+    "Dynamic portfolio showcase with masonry layout",
+    "Component-based modular architecture",
+    "CSS custom properties for theming",
+    "Responsive mobile-first design",
+    "Optimized performance with lazy loading",
+    "Vanilla JavaScript (no framework dependencies)"
+  ],
+  "publicApiSurface": [
+    "Mega Menu SPA navigation system",
+    "Portfolio grid component",
+    "Hero animation component",
+    "Dynamic Island UI component",
+    "Footer loader component",
+    "Adaptive sheet component",
+    "Design system CSS variables"
+  ]
+}
